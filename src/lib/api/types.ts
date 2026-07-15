@@ -32,3 +32,12 @@ export type QueueOrder = {
   currency: string;
   status: "FULFILLED" | "PENDING";
 };
+
+export type Product = {
+  id: string;
+  sku: string;
+  name: string;
+  size: string;
+  imageUrl: string;
+  price: number;
+};

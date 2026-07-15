@@ -8,19 +8,23 @@ import {
   Cable,
   ChevronRight,
   CircuitBoard,
+  ImageOff,
   LayoutDashboard,
   LogOut,
   MemoryStick,
   Package,
+  Plus,
   Settings,
   ShoppingCart,
   TrendingUp,
+  Upload,
   User,
   Wallet,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { adminApi, adminAuthApi } from "@/lib/api/endpoints";
-import type { AdminStats, InventoryItem, QueueOrder } from "@/lib/api/types";
+import { adminApi, adminAuthApi, productsApi } from "@/lib/api/endpoints";
+import type { AdminStats, InventoryItem, Product, QueueOrder } from "@/lib/api/types";
+import { parseProductsCsv } from "@/lib/csv";
 
 const DEMO_STATS: AdminStats = {
   grossRevenue24h: 142850,
@@ -60,6 +64,27 @@ const DEMO_QUEUE: QueueOrder[] = [
   },
 ];
 
+const DEMO_PRODUCTS: Product[] = [
+  {
+    id: "demo-p1",
+    sku: "SB-TEE-BLK",
+    name: "SunoBro Technical Tee",
+    size: "M",
+    imageUrl: "",
+    price: 42,
+  },
+  {
+    id: "demo-p2",
+    sku: "SB-CAP-01",
+    name: "Circuit Cap",
+    size: "One Size",
+    imageUrl: "",
+    price: 28,
+  },
+];
+
+const EMPTY_NEW_PRODUCT = { name: "", size: "", imageUrl: "", price: "" };
+
 const INVENTORY_ICONS = [MemoryStick, Cable, CircuitBoard];
 
 const statusTone = (status: InventoryItem["status"]) =>
@@ -72,23 +97,55 @@ const statusTone = (status: InventoryItem["status"]) =>
 const money = (n: number) =>
   `$${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
+function ProductThumb({ src, alt }: { src: string; alt: string }) {
+  const [errored, setErrored] = useState(!src);
+
+  if (errored) {
+    return (
+      <div className="w-10 h-10 shrink-0 bg-muted flex items-center justify-center technical-border">
+        <ImageOff className="h-4 w-4 text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Product images come from arbitrary URLs pasted into the CSV/add-product
+  // form, so next/image's fixed-domain optimizer doesn't apply here.
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setErrored(true)}
+      className="w-10 h-10 shrink-0 object-cover technical-border bg-muted"
+    />
+  );
+}
+
 export function AdminDashboardClient() {
   const router = useRouter();
   const [stats, setStats] = useState(DEMO_STATS);
   const [inventory, setInventory] = useState(DEMO_INVENTORY);
   const [queue, setQueue] = useState(DEMO_QUEUE);
+  const [products, setProducts] = useState(DEMO_PRODUCTS);
   const [isDemo, setIsDemo] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [addingProduct, setAddingProduct] = useState(false);
+  const [newProduct, setNewProduct] = useState(EMPTY_NEW_PRODUCT);
+  const [uploadingCsv, setUploadingCsv] = useState(false);
+  const [csvStatus, setCsvStatus] = useState<{ message: string; error?: boolean } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([adminApi.stats(), adminApi.inventory(), adminApi.orders()])
-      .then(([liveStats, liveInventory, liveQueue]) => {
+    Promise.all([adminApi.stats(), adminApi.inventory(), adminApi.orders(), productsApi.list()])
+      .then(([liveStats, liveInventory, liveQueue, liveProducts]) => {
         if (cancelled) return;
         setStats(liveStats);
         setInventory(liveInventory);
         setQueue(liveQueue);
+        setProducts(liveProducts);
         setIsDemo(false);
       })
       .catch(() => {
@@ -102,6 +159,73 @@ export function AdminDashboardClient() {
       cancelled = true;
     };
   }, []);
+
+  const handleAddProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newProduct.name.trim()) return;
+
+    const price = parseFloat(newProduct.price);
+    const payload = {
+      sku: "",
+      name: newProduct.name.trim(),
+      size: newProduct.size.trim(),
+      imageUrl: newProduct.imageUrl.trim(),
+      price: Number.isFinite(price) ? price : 0,
+    };
+
+    setAddingProduct(true);
+    try {
+      const created = await productsApi.create(payload);
+      setProducts((prev) => [created, ...prev]);
+    } catch {
+      // No backend wired up yet — keep the product locally so the list
+      // still reflects what was just added.
+      setProducts((prev) => [{ ...payload, id: crypto.randomUUID() }, ...prev]);
+    } finally {
+      setAddingProduct(false);
+      setNewProduct(EMPTY_NEW_PRODUCT);
+      setShowAddForm(false);
+    }
+  };
+
+  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    setUploadingCsv(true);
+    setCsvStatus(null);
+    try {
+      const text = await file.text();
+      const rows = parseProductsCsv(text);
+      if (rows.length === 0) {
+        setCsvStatus({
+          message:
+            "No product rows found — check the CSV has name, size, image url, and price columns.",
+          error: true,
+        });
+        return;
+      }
+
+      try {
+        const created = await productsApi.bulkCreate(rows);
+        setProducts((prev) => [...created, ...prev]);
+      } catch {
+        // No backend wired up yet — add the parsed rows locally.
+        setProducts((prev) => [
+          ...rows.map((row) => ({ ...row, id: crypto.randomUUID() })),
+          ...prev,
+        ]);
+      }
+      setCsvStatus({
+        message: `Imported ${rows.length} product${rows.length === 1 ? "" : "s"} from CSV.`,
+      });
+    } catch {
+      setCsvStatus({ message: "Could not read that CSV file.", error: true });
+    } finally {
+      setUploadingCsv(false);
+    }
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -385,6 +509,168 @@ export function AdminDashboardClient() {
             </div>
           </section>
         </div>
+
+        {/* Product catalog */}
+        <section className="mt-12 pt-12 border-t border-border/30">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 px-2">
+            <div>
+              <h3 className="font-mono text-[11px] uppercase tracking-widest">Product Catalog</h3>
+              <span className="font-mono text-[10px] text-muted-foreground">
+                {products.length} PRODUCT{products.length === 1 ? "" : "S"} LISTED
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <label className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
+                <Upload className="h-3.5 w-3.5" />
+                {uploadingCsv ? "UPLOADING..." : "UPLOAD CSV"}
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={handleCsvUpload}
+                  disabled={uploadingCsv}
+                />
+              </label>
+              <button
+                onClick={() => setShowAddForm((s) => !s)}
+                className="bg-foreground text-background px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                ADD PRODUCT
+              </button>
+            </div>
+          </div>
+
+          {csvStatus && (
+            <p
+              className={`px-2 mb-4 font-mono text-[11px] ${csvStatus.error ? "text-destructive" : "text-secondary"}`}
+            >
+              {csvStatus.message}
+            </p>
+          )}
+
+          {showAddForm && (
+            <form
+              onSubmit={handleAddProduct}
+              className="mb-6 p-6 technical-border bg-surface-lowest grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
+            >
+              <div className="md:col-span-2">
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Name
+                </label>
+                <input
+                  required
+                  value={newProduct.name}
+                  onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Size
+                </label>
+                <input
+                  value={newProduct.size}
+                  onChange={(e) => setNewProduct((p) => ({ ...p, size: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Image URL
+                </label>
+                <input
+                  value={newProduct.imageUrl}
+                  onChange={(e) => setNewProduct((p) => ({ ...p, imageUrl: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Price
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newProduct.price}
+                  onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
+              </div>
+              <div className="md:col-span-5 flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingProduct}
+                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {addingProduct ? "SAVING..." : "SAVE PRODUCT"}
+                </button>
+              </div>
+            </form>
+          )}
+
+          <div className="technical-border bg-surface-lowest overflow-hidden overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border/30 bg-muted/30">
+                  <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
+                    Product
+                  </th>
+                  <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
+                    Size
+                  </th>
+                  <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-right">
+                    Price
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={3}
+                      className="p-8 text-center font-mono text-xs text-muted-foreground"
+                    >
+                      NO PRODUCTS YET — ADD ONE OR UPLOAD A CSV
+                    </td>
+                  </tr>
+                ) : (
+                  products.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
+                    >
+                      <td className="p-4">
+                        <div className="flex items-center gap-4">
+                          <ProductThumb src={product.imageUrl} alt={product.name} />
+                          <div>
+                            <p className="text-sm">{product.name}</p>
+                            {product.sku && (
+                              <p className="text-xs text-muted-foreground font-mono">
+                                {product.sku}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-4 font-mono text-sm">{product.size || "—"}</td>
+                      <td className="p-4 text-right font-mono">{money(product.price)}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         {/* System logs */}
         <section className="mt-12 pt-12 border-t border-border/30">
