@@ -2,10 +2,6 @@ import type { Product } from "@/lib/api/types";
 
 export type CsvRow = Record<string, string>;
 
-/**
- * Splits raw CSV text into rows of cells, honoring quoted fields that may
- * contain commas, escaped quotes ("") or embedded newlines.
- */
 function splitCsvRows(text: string): string[][] {
   const rows: string[][] = [];
   let row: string[] = [];
