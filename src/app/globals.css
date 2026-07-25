@@ -68,6 +68,34 @@
   --surface-container: oklch(0.19 0.014 264);
   --surface-lowest: oklch(0.125 0.012 264);
   --surface-bright: oklch(0.23 0.015 264);
+  --technical-border-color: oklch(0.32 0.015 264 / 60%);
+}
+
+html.light {
+  --background: oklch(0.97 0.005 264);
+  --foreground: oklch(0.15 0.015 264);
+  --card: oklch(0.99 0.003 264);
+  --card-foreground: oklch(0.15 0.015 264);
+  --popover: oklch(0.99 0.003 264);
+  --popover-foreground: oklch(0.15 0.015 264);
+  --primary: oklch(0.46 0.12 268);
+  --primary-foreground: oklch(0.97 0.005 264);
+  --secondary: oklch(0.42 0.12 160);
+  --secondary-foreground: oklch(0.97 0.005 160);
+  --tertiary: oklch(0.52 0.14 85);
+  --muted: oklch(0.93 0.007 264);
+  --muted-foreground: oklch(0.5 0.02 264);
+  --accent: oklch(0.91 0.007 268);
+  --accent-foreground: oklch(0.15 0.015 264);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.97 0.01 264);
+  --border: oklch(0.82 0.01 264);
+  --input: oklch(0.82 0.01 264);
+  --ring: oklch(0.46 0.12 268);
+  --surface-container: oklch(0.94 0.007 264);
+  --surface-lowest: oklch(0.99 0.003 264);
+  --surface-bright: oklch(0.96 0.006 264);
+  --technical-border-color: oklch(0.78 0.012 264 / 70%);
 }
 
 @layer base {
@@ -87,7 +115,7 @@
 }
 
 @utility technical-border {
-  border: 1px solid oklch(0.32 0.015 264 / 60%);
+  border: 1px solid var(--technical-border-color);
 }
 
 @utility hero-gradient {

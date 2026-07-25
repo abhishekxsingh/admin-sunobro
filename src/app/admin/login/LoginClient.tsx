@@ -1,21 +1,28 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useCallback, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "motion/react";
-import { Lock, Terminal, TriangleAlert } from "lucide-react";
+import { Lock, Moon, Sun, Terminal, TriangleAlert } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi } from "@/lib/api/endpoints";
+import { useTheme } from "@/hooks/use-theme";
 
 export function LoginClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { theme, toggle } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [backendUnreachable, setBackendUnreachable] = useState(false);
+
+  const handleDemoMode = useCallback(() => {
+    const next = searchParams.get("next") ?? "/admin";
+    window.location.href = `/demo-access?next=${encodeURIComponent(next)}`;
+  }, [searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -36,7 +43,7 @@ export function LoginClient() {
       // status 0 = fetch never reached a server; 404 here means this same
       // Next.js app has no /api/admin/auth/login route yet, i.e. no backend
       // is wired up — both read as "not connected" from the user's side.
-      if (err instanceof ApiError && (err.status === 0 || err.status === 404)) {
+      if (err instanceof ApiError && (err.status === 0 || err.status === 404 || err.status === 500)) {
         setBackendUnreachable(true);
         setError(`Backend not reachable. Once it's live, sign-in will work here.`);
       } else if (err instanceof ApiError) {
@@ -51,6 +58,13 @@ export function LoginClient() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-6 relative overflow-hidden">
+      <button
+        onClick={toggle}
+        className="absolute top-4 right-4 z-20 p-2 technical-border bg-surface-lowest hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+        title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </button>
       <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
         <div className="grid grid-cols-12 h-full w-full">
           {Array.from({ length: 11 }).map((_, i) => (
@@ -132,9 +146,18 @@ export function LoginClient() {
               <div>
                 <p>{error}</p>
                 {backendUnreachable && (
-                  <p className="font-mono text-[10px] mt-2 opacity-70">
-                    NEXT_PUBLIC_API_BASE_URL → POST /admin/auth/login
-                  </p>
+                  <>
+                    <p className="font-mono text-[10px] mt-2 opacity-70">
+                      NEXT_PUBLIC_API_BASE_URL → POST /admin/auth/login
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleDemoMode}
+                      className="mt-3 font-mono text-[11px] uppercase tracking-widest underline hover:text-foreground transition-colors"
+                    >
+                      View Demo →
+                    </button>
+                  </>
                 )}
               </div>
             </motion.div>
