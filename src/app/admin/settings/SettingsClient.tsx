@@ -15,16 +15,29 @@ export function SettingsClient() {
 
   useEffect(() => {
     let cancelled = false;
-    adminAuthApi.me().then((user) => {
-      if (!cancelled) setAdminUser(user);
-    }).catch(() => { /* backend offline */ });
-    return () => { cancelled = true; };
+    adminAuthApi
+      .me()
+      .then((user) => {
+        if (!cancelled) setAdminUser(user);
+      })
+      .catch(() => {
+        /* backend offline */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    try { await adminAuthApi.logout(); } catch { /* ignore */ }
-    finally { router.push("/admin/login"); router.refresh(); }
+    try {
+      await adminAuthApi.logout();
+    } catch {
+      /* ignore */
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
   };
 
   return (
@@ -49,7 +62,9 @@ export function SettingsClient() {
           {/* Store Configuration */}
           <section className="technical-border bg-surface-lowest p-6 space-y-5">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">Store Configuration</p>
+              <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">
+                Store Configuration
+              </p>
               <p className="font-mono text-[10px] text-muted-foreground">
                 [DISPLAY ONLY — changes are not persisted to backend yet]
               </p>
@@ -96,8 +111,12 @@ export function SettingsClient() {
           <section className="technical-border bg-surface-lowest p-6 space-y-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">Qikink Integration</p>
-                <p className="font-mono text-[10px] text-muted-foreground">Print-on-demand fulfillment</p>
+                <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">
+                  Qikink Integration
+                </p>
+                <p className="font-mono text-[10px] text-muted-foreground">
+                  Print-on-demand fulfillment
+                </p>
               </div>
               <span className="font-mono text-[10px] px-2 py-0.5 border bg-tertiary/10 text-tertiary border-tertiary/20">
                 NOT CONFIGURED
@@ -105,10 +124,18 @@ export function SettingsClient() {
             </div>
 
             <div className="p-4 bg-surface-container technical-border font-mono text-[10px] space-y-1">
-              <p className="text-tertiary">[WARN] QIKINK_NOT_WIRED — configure credentials in .env</p>
-              <p className="text-muted-foreground">[TODO] QIKINK_CLIENT_ID=&lt;your-client-id&gt;</p>
-              <p className="text-muted-foreground">[TODO] QIKINK_CLIENT_SECRET=&lt;your-secret&gt;</p>
-              <p className="text-muted-foreground">[SEE] server/services/admin/qikink.js for setup instructions</p>
+              <p className="text-tertiary">
+                [WARN] QIKINK_NOT_WIRED — configure credentials in .env
+              </p>
+              <p className="text-muted-foreground">
+                [TODO] QIKINK_CLIENT_ID=&lt;your-client-id&gt;
+              </p>
+              <p className="text-muted-foreground">
+                [TODO] QIKINK_CLIENT_SECRET=&lt;your-secret&gt;
+              </p>
+              <p className="text-muted-foreground">
+                [SEE] server/services/admin/qikink.js for setup instructions
+              </p>
             </div>
 
             <div className="space-y-3">

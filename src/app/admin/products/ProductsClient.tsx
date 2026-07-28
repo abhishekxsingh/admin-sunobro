@@ -45,8 +45,26 @@ const DEMO_PRODUCTS: AdminProduct[] = [
   },
 ];
 
-type ProductForm = { name: string; slug: string; description: string; price: string; currency: string; images: string; sizes: string; status: "active" | "draft" };
-const EMPTY_FORM: ProductForm = { name: "", slug: "", description: "", price: "", currency: "INR", images: "", sizes: "", status: "active" };
+type ProductForm = {
+  name: string;
+  slug: string;
+  description: string;
+  price: string;
+  currency: string;
+  images: string;
+  sizes: string;
+  status: "active" | "draft";
+};
+const EMPTY_FORM: ProductForm = {
+  name: "",
+  slug: "",
+  description: "",
+  price: "",
+  currency: "INR",
+  images: "",
+  sizes: "",
+  status: "active",
+};
 
 const money = (n: number, cur = "INR") =>
   `${cur === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
@@ -61,7 +79,12 @@ function ProductThumb({ src, alt }: { src: string; alt: string }) {
     );
   }
   return (
-    <img src={src} alt={alt} onError={() => setErrored(true)} className="w-10 h-10 shrink-0 object-cover technical-border bg-muted" />
+    <img
+      src={src}
+      alt={alt}
+      onError={() => setErrored(true)}
+      className="w-10 h-10 shrink-0 object-cover technical-border bg-muted"
+    />
   );
 }
 
@@ -84,28 +107,48 @@ export function ProductsClient() {
   useEffect(() => {
     let cancelled = false;
 
-    adminAuthApi.me().then((user) => {
-      if (!cancelled) setAdminUser(user);
-    }).catch(() => { /* backend offline */ });
+    adminAuthApi
+      .me()
+      .then((user) => {
+        if (!cancelled) setAdminUser(user);
+      })
+      .catch(() => {
+        /* backend offline */
+      });
 
-    adminProductsApi.list().then((liveProducts) => {
-      if (cancelled) return;
-      setProducts(liveProducts);
-      setIsDemo(false);
-    }).catch(() => {
-      if (!cancelled) setIsDemo(true);
-    });
+    adminProductsApi
+      .list()
+      .then((liveProducts) => {
+        if (cancelled) return;
+        setProducts(liveProducts);
+        setIsDemo(false);
+      })
+      .catch(() => {
+        if (!cancelled) setIsDemo(true);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    try { await adminAuthApi.logout(); } catch { /* ignore */ }
-    finally { router.push("/admin/login"); router.refresh(); }
+    try {
+      await adminAuthApi.logout();
+    } catch {
+      /* ignore */
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
   };
 
-  const openCreate = () => { setForm(EMPTY_FORM); setEditTarget(null); setView("create"); };
+  const openCreate = () => {
+    setForm(EMPTY_FORM);
+    setEditTarget(null);
+    setView("create");
+  };
   const openEdit = (p: AdminProduct) => {
     setForm({
       name: p.name,
@@ -130,8 +173,14 @@ export function ProductsClient() {
       description: form.description.trim(),
       price: parseFloat(form.price) || 0,
       currency: form.currency,
-      images: form.images.split(",").map((s) => s.trim()).filter(Boolean),
-      sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
+      images: form.images
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      sizes: form.sizes
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
       status: form.status,
     };
 
@@ -199,23 +248,40 @@ export function ProductsClient() {
       const text = await file.text();
       const rows = parseProductsCsv(text);
       if (rows.length === 0) {
-        setCsvStatus({ message: "No rows found — check CSV headers (name, size, image url, price).", error: true });
+        setCsvStatus({
+          message: "No rows found — check CSV headers (name, size, image url, price).",
+          error: true,
+        });
         return;
       }
       try {
         const { created } = await adminProductsApi.bulkCreate(
-          rows.map((r) => ({ name: r.name, price: r.price, images: r.imageUrl ? [r.imageUrl] : [], sizes: r.size ? [r.size] : [] }))
+          rows.map((r) => ({
+            name: r.name,
+            price: r.price,
+            images: r.imageUrl ? [r.imageUrl] : [],
+            sizes: r.size ? [r.size] : [],
+          })),
         );
         setProducts((prev) => [...created, ...prev]);
       } catch {
         setProducts((prev) => [
           ...rows.map((r) => ({
-            id: crypto.randomUUID(), slug: r.name.toLowerCase().replace(/\s+/g, "-"),
-            name: r.name, description: "", price: r.price, currency: "INR",
-            images: r.imageUrl ? [r.imageUrl] : [], sizes: r.size ? [r.size] : [],
-            inStock: true, status: "active" as const,
-            variantCount: 0, totalStock: 0, qikinkSynced: false,
-            createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+            id: crypto.randomUUID(),
+            slug: r.name.toLowerCase().replace(/\s+/g, "-"),
+            name: r.name,
+            description: "",
+            price: r.price,
+            currency: "INR",
+            images: r.imageUrl ? [r.imageUrl] : [],
+            sizes: r.size ? [r.size] : [],
+            inStock: true,
+            status: "active" as const,
+            variantCount: 0,
+            totalStock: 0,
+            qikinkSynced: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           })),
           ...prev,
         ]);
@@ -261,7 +327,13 @@ export function ProductsClient() {
               <label className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
                 <Upload className="h-3.5 w-3.5" />
                 {uploadingCsv ? "UPLOADING..." : "UPLOAD CSV"}
-                <input type="file" accept=".csv,text/csv" className="hidden" onChange={handleCsvUpload} disabled={uploadingCsv} />
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={handleCsvUpload}
+                  disabled={uploadingCsv}
+                />
               </label>
               <button
                 onClick={openCreate}
@@ -274,7 +346,9 @@ export function ProductsClient() {
         </header>
 
         {csvStatus && (
-          <p className={`mb-4 font-mono text-[11px] ${csvStatus.error ? "text-destructive" : "text-secondary"}`}>
+          <p
+            className={`mb-4 font-mono text-[11px] ${csvStatus.error ? "text-destructive" : "text-secondary"}`}
+          >
             {csvStatus.message}
           </p>
         )}
@@ -295,7 +369,9 @@ export function ProductsClient() {
                 { label: "Sizes (comma-separated)", key: "sizes" },
               ].map(({ label, key, required, type }) => (
                 <div key={key} className={key === "images" ? "md:col-span-2" : ""}>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">{label}</label>
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                    {label}
+                  </label>
                   <input
                     required={required}
                     type={type || "text"}
@@ -306,7 +382,9 @@ export function ProductsClient() {
                 </div>
               ))}
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">Description</label>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Description
+                </label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
@@ -315,7 +393,9 @@ export function ProductsClient() {
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-2">Status</label>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-2">
+                  Status
+                </label>
                 <div className="flex gap-2">
                   {(["active", "draft"] as const).map((s) => (
                     <button
@@ -323,7 +403,9 @@ export function ProductsClient() {
                       type="button"
                       onClick={() => setForm((f) => ({ ...f, status: s }))}
                       className={`px-4 py-2 font-mono text-[11px] technical-border transition-all ${
-                        form.status === s ? "bg-secondary/20 text-secondary border-secondary/40" : "text-muted-foreground"
+                        form.status === s
+                          ? "bg-secondary/20 text-secondary border-secondary/40"
+                          : "text-muted-foreground"
                       }`}
                     >
                       {s.toUpperCase()}
@@ -333,10 +415,18 @@ export function ProductsClient() {
               </div>
             </div>
             <div className="flex gap-3 justify-end mt-6">
-              <button type="button" onClick={() => setView("list")} className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                type="button"
+                onClick={() => setView("list")}
+                className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+              >
                 CANCEL
               </button>
-              <button type="submit" disabled={saving} className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50">
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+              >
                 {saving ? "SAVING..." : "SAVE PRODUCT"}
               </button>
             </div>
@@ -349,45 +439,63 @@ export function ProductsClient() {
             <thead>
               <tr className="border-b border-border/30 bg-muted/30">
                 {["Product", "Status", "Price", "Stock", "Qikink", "Actions"].map((h) => (
-                  <th key={h} className="p-4 font-mono text-[11px] text-muted-foreground uppercase">{h}</th>
+                  <th key={h} className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center font-mono text-xs text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center font-mono text-xs text-muted-foreground"
+                  >
                     NO PRODUCTS YET — ADD ONE OR UPLOAD A CSV
                   </td>
                 </tr>
               ) : (
                 products.map((product) => (
-                  <tr key={product.id} className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors">
+                  <tr
+                    key={product.id}
+                    className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <ProductThumb src={product.images[0] || ""} alt={product.name} />
                         <div>
                           <p className="text-sm font-medium">{product.name}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">{product.slug}</p>
+                          <p className="font-mono text-[10px] text-muted-foreground">
+                            {product.slug}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4">
-                      <span className={`font-mono text-[10px] px-2 py-0.5 border ${
-                        product.status === "active"
-                          ? "bg-secondary/10 text-secondary border-secondary/20"
-                          : "border-border/40 text-muted-foreground"
-                      }`}>
+                      <span
+                        className={`font-mono text-[10px] px-2 py-0.5 border ${
+                          product.status === "active"
+                            ? "bg-secondary/10 text-secondary border-secondary/20"
+                            : "border-border/40 text-muted-foreground"
+                        }`}
+                      >
                         {product.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-sm">{money(product.price, product.currency)}</td>
                     <td className="p-4 font-mono text-sm">
-                      {product.totalStock} <span className="text-[10px] text-muted-foreground">units</span>
+                      {money(product.price, product.currency)}
+                    </td>
+                    <td className="p-4 font-mono text-sm">
+                      {product.totalStock}{" "}
+                      <span className="text-[10px] text-muted-foreground">units</span>
                     </td>
                     <td className="p-4">
                       {syncResult?.id === product.id ? (
-                        <p className="font-mono text-[10px] text-tertiary max-w-[120px] truncate" title={syncResult.message}>
+                        <p
+                          className="font-mono text-[10px] text-tertiary max-w-[120px] truncate"
+                          title={syncResult.message}
+                        >
                           {syncResult.message}
                         </p>
                       ) : (
@@ -396,7 +504,9 @@ export function ProductsClient() {
                           disabled={syncingId === product.id}
                           className="bg-tertiary/10 text-tertiary border border-tertiary/20 font-mono text-[10px] px-2 py-0.5 hover:bg-tertiary/20 transition-all disabled:opacity-50 flex items-center gap-1"
                         >
-                          <RefreshCw className={`h-2.5 w-2.5 ${syncingId === product.id ? "animate-spin" : ""}`} />
+                          <RefreshCw
+                            className={`h-2.5 w-2.5 ${syncingId === product.id ? "animate-spin" : ""}`}
+                          />
                           {syncingId === product.id ? "SYNCING..." : "SYNC_QIKINK"}
                         </button>
                       )}

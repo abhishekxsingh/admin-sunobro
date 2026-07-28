@@ -18,24 +18,39 @@ export function ProfileClient() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const [passwordStatus, setPasswordStatus] = useState<{ message: string; error: boolean } | null>(null);
+  const [passwordStatus, setPasswordStatus] = useState<{ message: string; error: boolean } | null>(
+    null,
+  );
 
   useEffect(() => {
     let cancelled = false;
-    adminAuthApi.me().then((user) => {
-      if (!cancelled) {
-        setAdminUser(user);
-        setEditName(user.name);
-        setEditEmail(user.email);
-      }
-    }).catch(() => { /* backend offline */ });
-    return () => { cancelled = true; };
+    adminAuthApi
+      .me()
+      .then((user) => {
+        if (!cancelled) {
+          setAdminUser(user);
+          setEditName(user.name);
+          setEditEmail(user.email);
+        }
+      })
+      .catch(() => {
+        /* backend offline */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    try { await adminAuthApi.logout(); } catch { /* ignore */ }
-    finally { router.push("/admin/login"); router.refresh(); }
+    try {
+      await adminAuthApi.logout();
+    } catch {
+      /* ignore */
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -47,7 +62,10 @@ export function ProfileClient() {
       setAdminUser(updated);
       setSaveStatus({ message: "Profile updated.", error: false });
     } catch {
-      setSaveStatus({ message: "[PUT /admin/profile — not wired yet] Changes not persisted.", error: true });
+      setSaveStatus({
+        message: "[PUT /admin/profile — not wired yet] Changes not persisted.",
+        error: true,
+      });
     } finally {
       setSaving(false);
     }
@@ -64,16 +82,26 @@ export function ProfileClient() {
     try {
       await adminProfileApi.changePassword({ currentPassword, newPassword });
       setPasswordStatus({ message: "Password changed.", error: false });
-      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
     } catch {
-      setPasswordStatus({ message: "[PUT /admin/profile/password — not wired yet] Password not changed.", error: true });
+      setPasswordStatus({
+        message: "[PUT /admin/profile/password — not wired yet] Password not changed.",
+        error: true,
+      });
     } finally {
       setChangingPassword(false);
     }
   };
 
   const initials = adminUser?.name
-    ? adminUser.name.split(" ").map((p) => p[0]).join("").toUpperCase().slice(0, 2)
+    ? adminUser.name
+        .split(" ")
+        .map((p) => p[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
     : "OP";
 
   return (
@@ -115,7 +143,9 @@ export function ProfileClient() {
                 Edit Identity
               </p>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">Name</label>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Name
+                </label>
                 <input
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
@@ -123,7 +153,9 @@ export function ProfileClient() {
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">Email</label>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   value={editEmail}
@@ -132,7 +164,9 @@ export function ProfileClient() {
                 />
               </div>
               {saveStatus && (
-                <p className={`font-mono text-[11px] ${saveStatus.error ? "text-destructive" : "text-secondary"}`}>
+                <p
+                  className={`font-mono text-[11px] ${saveStatus.error ? "text-destructive" : "text-secondary"}`}
+                >
                   {saveStatus.message}
                 </p>
               )}
@@ -157,7 +191,9 @@ export function ProfileClient() {
                 { label: "Confirm New Password", value: confirmPassword, set: setConfirmPassword },
               ].map(({ label, value, set }) => (
                 <div key={label}>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">{label}</label>
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                    {label}
+                  </label>
                   <input
                     type="password"
                     required
@@ -169,7 +205,9 @@ export function ProfileClient() {
               ))}
 
               {passwordStatus && (
-                <p className={`font-mono text-[11px] ${passwordStatus.error ? "text-destructive" : "text-secondary"}`}>
+                <p
+                  className={`font-mono text-[11px] ${passwordStatus.error ? "text-destructive" : "text-secondary"}`}
+                >
                   {passwordStatus.message}
                 </p>
               )}

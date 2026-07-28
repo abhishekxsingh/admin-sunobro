@@ -35,9 +35,30 @@ const DEMO_INVENTORY: InventoryItem[] = [
 ];
 
 const DEMO_QUEUE: QueueOrder[] = [
-  { ref: "#ORD-4921-A", client: "Vector Dynamics Ltd.", value: 12450, currency: "USD", status: "delivered", createdAt: new Date().toISOString() },
-  { ref: "#ORD-5012-K", client: "H. Matsumoto (Individual)", value: 2800, currency: "USD", status: "pending", createdAt: new Date().toISOString() },
-  { ref: "#ORD-5015-Z", client: "Aether Research", value: 45120, currency: "USD", status: "shipped", createdAt: new Date().toISOString() },
+  {
+    ref: "#ORD-4921-A",
+    client: "Vector Dynamics Ltd.",
+    value: 12450,
+    currency: "USD",
+    status: "delivered",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    ref: "#ORD-5012-K",
+    client: "H. Matsumoto (Individual)",
+    value: 2800,
+    currency: "USD",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  },
+  {
+    ref: "#ORD-5015-Z",
+    client: "Aether Research",
+    value: 45120,
+    currency: "USD",
+    status: "shipped",
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 const INVENTORY_ICONS = [MemoryStick, Cable, CircuitBoard];
@@ -53,10 +74,34 @@ const money = (n: number, currency = "USD") =>
   `${currency === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const QUICK_NAV = [
-  { label: "Orders", sub: "Manage fulfillment queue", href: "/admin/orders", icon: ShoppingCart, metric: (s: AdminStats) => `${s.activeOrders.toLocaleString()} active` },
-  { label: "Products", sub: "Catalog & pricing", href: "/admin/products", icon: ShoppingBag, metric: () => "Manage catalog" },
-  { label: "Inventory", sub: "Stock & variants", href: "/admin/inventory", icon: Boxes, metric: () => "Monitor stock" },
-  { label: "Settings", sub: "Store & integrations", href: "/admin/settings", icon: Settings, metric: () => "Configure" },
+  {
+    label: "Orders",
+    sub: "Manage fulfillment queue",
+    href: "/admin/orders",
+    icon: ShoppingCart,
+    metric: (s: AdminStats) => `${s.activeOrders.toLocaleString()} active`,
+  },
+  {
+    label: "Products",
+    sub: "Catalog & pricing",
+    href: "/admin/products",
+    icon: ShoppingBag,
+    metric: () => "Manage catalog",
+  },
+  {
+    label: "Inventory",
+    sub: "Stock & variants",
+    href: "/admin/inventory",
+    icon: Boxes,
+    metric: () => "Monitor stock",
+  },
+  {
+    label: "Settings",
+    sub: "Store & integrations",
+    href: "/admin/settings",
+    icon: Settings,
+    metric: () => "Configure",
+  },
 ];
 
 export function AdminDashboardClient() {
@@ -71,12 +116,15 @@ export function AdminDashboardClient() {
   useEffect(() => {
     let cancelled = false;
 
-    adminAuthApi.me().then((user) => {
-      if (!cancelled) setAdminUser(user);
-    }).catch(() => {
-      // Backend unreachable — stay in demo mode, don't redirect
-      if (!cancelled) setIsDemo(true);
-    });
+    adminAuthApi
+      .me()
+      .then((user) => {
+        if (!cancelled) setAdminUser(user);
+      })
+      .catch(() => {
+        // Backend unreachable — stay in demo mode, don't redirect
+        if (!cancelled) setIsDemo(true);
+      });
 
     Promise.all([adminApi.stats(), adminApi.inventory(), adminApi.orders()])
       .then(([liveStats, liveInventory, liveQueue]) => {
@@ -90,7 +138,9 @@ export function AdminDashboardClient() {
         if (!cancelled) setIsDemo(true);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogout = async () => {
@@ -105,9 +155,7 @@ export function AdminDashboardClient() {
     }
   };
 
-  const criticalInventory = [...inventory]
-    .sort((a, b) => a.stock - b.stock)
-    .slice(0, 3);
+  const criticalInventory = [...inventory].sort((a, b) => a.stock - b.stock).slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -151,8 +199,11 @@ export function AdminDashboardClient() {
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold">{money(stats.grossRevenue24h)}</span>
-                <span className={`font-mono text-xs ${stats.revenueChangePct >= 0 ? "text-secondary" : "text-destructive"}`}>
-                  {stats.revenueChangePct >= 0 ? "+" : ""}{stats.revenueChangePct}%
+                <span
+                  className={`font-mono text-xs ${stats.revenueChangePct >= 0 ? "text-secondary" : "text-destructive"}`}
+                >
+                  {stats.revenueChangePct >= 0 ? "+" : ""}
+                  {stats.revenueChangePct}%
                 </span>
               </div>
               <div className="mt-6 h-1 w-full bg-border">
@@ -193,8 +244,11 @@ export function AdminDashboardClient() {
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-3xl font-bold">{stats.conversionRatePct}%</span>
-                <span className={`font-mono text-xs ${stats.conversionChangePct >= 0 ? "text-secondary" : "text-destructive"}`}>
-                  {stats.conversionChangePct >= 0 ? "+" : ""}{stats.conversionChangePct}%
+                <span
+                  className={`font-mono text-xs ${stats.conversionChangePct >= 0 ? "text-secondary" : "text-destructive"}`}
+                >
+                  {stats.conversionChangePct >= 0 ? "+" : ""}
+                  {stats.conversionChangePct}%
                 </span>
               </div>
               <div className="mt-6 font-mono text-xs text-muted-foreground flex justify-between">
@@ -232,7 +286,10 @@ export function AdminDashboardClient() {
           <section className="lg:col-span-7">
             <div className="flex items-center justify-between mb-4 px-2">
               <h3 className="font-mono text-[11px] uppercase tracking-widest">Critical Stock</h3>
-              <Link href="/admin/inventory" className="font-mono text-[10px] text-primary hover:underline flex items-center gap-1">
+              <Link
+                href="/admin/inventory"
+                className="font-mono text-[10px] text-primary hover:underline flex items-center gap-1"
+              >
                 VIEW ALL <ChevronRight className="h-3 w-3" />
               </Link>
             </div>
@@ -252,8 +309,13 @@ export function AdminDashboardClient() {
                       <p className="text-xs text-muted-foreground truncate">{item.name}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="font-mono text-sm">{item.stock.toLocaleString()} <span className="text-xs text-muted-foreground">units</span></p>
-                      <span className={`font-mono text-[10px] px-2 py-0.5 border ${statusTone(item.status)}`}>
+                      <p className="font-mono text-sm">
+                        {item.stock.toLocaleString()}{" "}
+                        <span className="text-xs text-muted-foreground">units</span>
+                      </p>
+                      <span
+                        className={`font-mono text-[10px] px-2 py-0.5 border ${statusTone(item.status)}`}
+                      >
                         {item.status}
                       </span>
                     </div>
@@ -267,7 +329,10 @@ export function AdminDashboardClient() {
           <section className="lg:col-span-5">
             <div className="flex items-center justify-between mb-4 px-2">
               <h3 className="font-mono text-[11px] uppercase tracking-widest">Queue Protocol</h3>
-              <Link href="/admin/orders" className="font-mono text-[10px] text-primary hover:underline flex items-center gap-1">
+              <Link
+                href="/admin/orders"
+                className="font-mono text-[10px] text-primary hover:underline flex items-center gap-1"
+              >
                 VIEW ALL <ChevronRight className="h-3 w-3" />
               </Link>
             </div>
@@ -281,7 +346,9 @@ export function AdminDashboardClient() {
                 >
                   <div className="flex justify-between items-start mb-3">
                     <span className="font-mono text-xs text-primary">{o.ref}</span>
-                    <span className={`font-mono text-[10px] px-2 ${o.status === "pending" ? "bg-tertiary text-background" : "bg-secondary text-secondary-foreground"}`}>
+                    <span
+                      className={`font-mono text-[10px] px-2 ${o.status === "pending" ? "bg-tertiary text-background" : "bg-secondary text-secondary-foreground"}`}
+                    >
                       {o.status.toUpperCase()}
                     </span>
                   </div>

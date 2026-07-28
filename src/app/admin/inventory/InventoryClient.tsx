@@ -48,20 +48,32 @@ export function InventoryClient() {
   useEffect(() => {
     let cancelled = false;
 
-    adminAuthApi.me().then((user) => {
-      if (!cancelled) setAdminUser(user);
-    }).catch(() => { /* backend offline */ });
+    adminAuthApi
+      .me()
+      .then((user) => {
+        if (!cancelled) setAdminUser(user);
+      })
+      .catch(() => {
+        /* backend offline */
+      });
 
     load();
 
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    try { await adminAuthApi.logout(); } catch { /* ignore */ }
-    finally { router.push("/admin/login"); router.refresh(); }
+    try {
+      await adminAuthApi.logout();
+    } catch {
+      /* ignore */
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
   };
 
   const handleRefresh = async () => {
@@ -150,16 +162,25 @@ export function InventoryClient() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/30 bg-muted/30">
-                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase">SKU / Product</th>
-                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-right">Stock Level</th>
-                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-center">Status</th>
+                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
+                  SKU / Product
+                </th>
+                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-right">
+                  Stock Level
+                </th>
+                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-center">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((item, i) => {
                 const Icon = INVENTORY_ICONS[i % INVENTORY_ICONS.length];
                 return (
-                  <tr key={item.sku} className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors">
+                  <tr
+                    key={item.sku}
+                    className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 bg-muted flex items-center justify-center technical-border">
@@ -172,10 +193,13 @@ export function InventoryClient() {
                       </div>
                     </td>
                     <td className="p-4 text-right font-mono">
-                      {item.stock.toLocaleString()} <span className="text-xs text-muted-foreground">units</span>
+                      {item.stock.toLocaleString()}{" "}
+                      <span className="text-xs text-muted-foreground">units</span>
                     </td>
                     <td className="p-4 text-center">
-                      <span className={`font-mono text-[10px] px-2 py-0.5 border ${statusTone(item.status)}`}>
+                      <span
+                        className={`font-mono text-[10px] px-2 py-0.5 border ${statusTone(item.status)}`}
+                      >
                         {item.status}
                       </span>
                     </td>

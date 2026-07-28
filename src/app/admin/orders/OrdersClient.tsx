@@ -16,8 +16,19 @@ const DEMO_ORDERS: AdminOrder[] = [
     client: "Vector Dynamics Ltd.",
     total: 12450,
     currency: "INR",
-    items: [{ name: "SunoBro Technical Tee", size: "L", color: "Black", sku: "SB-TEE-L-BLK", price: 4150, qty: 3 }],
-    statusHistory: [{ status: "pending", note: "Order created.", createdAt: new Date().toISOString() }],
+    items: [
+      {
+        name: "SunoBro Technical Tee",
+        size: "L",
+        color: "Black",
+        sku: "SB-TEE-L-BLK",
+        price: 4150,
+        qty: 3,
+      },
+    ],
+    statusHistory: [
+      { status: "pending", note: "Order created.", createdAt: new Date().toISOString() },
+    ],
     createdAt: new Date().toISOString(),
     shippingCity: "Mumbai",
     shippingCountry: "IN",
@@ -29,9 +40,22 @@ const DEMO_ORDERS: AdminOrder[] = [
     client: "H. Matsumoto",
     total: 2800,
     currency: "INR",
-    items: [{ name: "Circuit Cap", size: "One Size", color: "White", sku: "SB-CAP-OS-WHT", price: 2800, qty: 1 }],
+    items: [
+      {
+        name: "Circuit Cap",
+        size: "One Size",
+        color: "White",
+        sku: "SB-CAP-OS-WHT",
+        price: 2800,
+        qty: 1,
+      },
+    ],
     statusHistory: [
-      { status: "pending", note: "Order created.", createdAt: new Date(Date.now() - 86400000).toISOString() },
+      {
+        status: "pending",
+        note: "Order created.",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+      },
       { status: "paid", note: "Payment confirmed.", createdAt: new Date().toISOString() },
     ],
     createdAt: new Date(Date.now() - 86400000).toISOString(),
@@ -45,10 +69,27 @@ const DEMO_ORDERS: AdminOrder[] = [
     client: "Aether Research",
     total: 45120,
     currency: "INR",
-    items: [{ name: "SunoBro Technical Tee", size: "M", color: "Grey", sku: "SB-TEE-M-GRY", price: 4150, qty: 10 }],
+    items: [
+      {
+        name: "SunoBro Technical Tee",
+        size: "M",
+        color: "Grey",
+        sku: "SB-TEE-M-GRY",
+        price: 4150,
+        qty: 10,
+      },
+    ],
     statusHistory: [
-      { status: "pending", note: "Order created.", createdAt: new Date(Date.now() - 172800000).toISOString() },
-      { status: "shipped", note: "Dispatched via BlueDart.", createdAt: new Date(Date.now() - 86400000).toISOString() },
+      {
+        status: "pending",
+        note: "Order created.",
+        createdAt: new Date(Date.now() - 172800000).toISOString(),
+      },
+      {
+        status: "shipped",
+        note: "Dispatched via BlueDart.",
+        createdAt: new Date(Date.now() - 86400000).toISOString(),
+      },
       { status: "delivered", note: "Delivered.", createdAt: new Date().toISOString() },
     ],
     createdAt: new Date(Date.now() - 172800000).toISOString(),
@@ -99,25 +140,41 @@ export function OrdersClient() {
   useEffect(() => {
     let cancelled = false;
 
-    adminAuthApi.me().then((user) => {
-      if (!cancelled) setAdminUser(user);
-    }).catch(() => { /* backend offline */ });
+    adminAuthApi
+      .me()
+      .then((user) => {
+        if (!cancelled) setAdminUser(user);
+      })
+      .catch(() => {
+        /* backend offline */
+      });
 
-    adminApi.orders().then((liveOrders) => {
-      if (cancelled) return;
-      setOrders(liveOrders.map(fromQueueOrder));
-      setIsDemo(false);
-    }).catch(() => {
-      if (!cancelled) setIsDemo(true);
-    });
+    adminApi
+      .orders()
+      .then((liveOrders) => {
+        if (cancelled) return;
+        setOrders(liveOrders.map(fromQueueOrder));
+        setIsDemo(false);
+      })
+      .catch(() => {
+        if (!cancelled) setIsDemo(true);
+      });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [router]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
-    try { await adminAuthApi.logout(); } catch { /* ignore */ }
-    finally { router.push("/admin/login"); router.refresh(); }
+    try {
+      await adminAuthApi.logout();
+    } catch {
+      /* ignore */
+    } finally {
+      router.push("/admin/login");
+      router.refresh();
+    }
   };
 
   const handleUpdateStatus = async () => {
@@ -142,7 +199,11 @@ export function OrdersClient() {
         status: newStatus,
         statusHistory: [
           ...selected.statusHistory,
-          { status: newStatus, note: statusNote || "(local only)", createdAt: new Date().toISOString() },
+          {
+            status: newStatus,
+            note: statusNote || "(local only)",
+            createdAt: new Date().toISOString(),
+          },
         ],
       };
       setOrders((prev) => prev.map((o) => (o.id === selected.id ? updated : o)));
@@ -212,18 +273,26 @@ export function OrdersClient() {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center font-mono text-xs text-muted-foreground">
+                  <td
+                    colSpan={6}
+                    className="p-8 text-center font-mono text-xs text-muted-foreground"
+                  >
                     NO ORDERS MATCHING FILTER
                   </td>
                 </tr>
               ) : (
                 filtered.map((order) => (
-                  <tr key={order.id} className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors">
+                  <tr
+                    key={order.id}
+                    className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
+                  >
                     <td className="p-4 font-mono text-xs text-primary">{order.reference}</td>
                     <td className="p-4 text-sm">{order.client}</td>
                     <td className="p-4 font-mono text-sm">{money(order.total, order.currency)}</td>
                     <td className="p-4">
-                      <span className={`font-mono text-[10px] px-2 py-0.5 border ${STATUS_BADGE[order.status]}`}>
+                      <span
+                        className={`font-mono text-[10px] px-2 py-0.5 border ${STATUS_BADGE[order.status]}`}
+                      >
                         {order.status.toUpperCase()}
                       </span>
                     </td>
@@ -232,7 +301,10 @@ export function OrdersClient() {
                     </td>
                     <td className="p-4">
                       <button
-                        onClick={() => { setSelected(order); setNewStatus(order.status); }}
+                        onClick={() => {
+                          setSelected(order);
+                          setNewStatus(order.status);
+                        }}
                         className="font-mono text-[11px] text-primary hover:underline"
                       >
                         VIEW →
@@ -247,12 +319,20 @@ export function OrdersClient() {
 
         {/* Pagination hint */}
         <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground">
-          <span>{filtered.length} ORDER{filtered.length === 1 ? "" : "S"}</span>
+          <span>
+            {filtered.length} ORDER{filtered.length === 1 ? "" : "S"}
+          </span>
           <div className="flex gap-2">
-            <button className="technical-border px-3 py-1.5 flex items-center gap-1 hover:border-foreground transition-all disabled:opacity-40" disabled>
+            <button
+              className="technical-border px-3 py-1.5 flex items-center gap-1 hover:border-foreground transition-all disabled:opacity-40"
+              disabled
+            >
               <ChevronLeft className="h-3 w-3" /> PREV
             </button>
-            <button className="technical-border px-3 py-1.5 flex items-center gap-1 hover:border-foreground transition-all disabled:opacity-40" disabled>
+            <button
+              className="technical-border px-3 py-1.5 flex items-center gap-1 hover:border-foreground transition-all disabled:opacity-40"
+              disabled
+            >
               NEXT <ChevronRight className="h-3 w-3" />
             </button>
           </div>
@@ -284,7 +364,10 @@ export function OrdersClient() {
                     {new Date(selected.createdAt).toLocaleString()}
                   </p>
                 </div>
-                <button onClick={() => setSelected(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <button
+                  onClick={() => setSelected(null)}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -292,16 +375,22 @@ export function OrdersClient() {
               <div className="p-6 space-y-8 flex-1">
                 {/* Status history */}
                 <div>
-                  <p className="font-mono text-[11px] uppercase tracking-widest mb-3">Status History</p>
+                  <p className="font-mono text-[11px] uppercase tracking-widest mb-3">
+                    Status History
+                  </p>
                   <div className="space-y-2">
                     {selected.statusHistory.map((h, i) => (
                       <div key={i} className="flex gap-3 items-start">
                         <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
                         <div>
-                          <span className={`font-mono text-[10px] px-1.5 py-0.5 border ${STATUS_BADGE[h.status as AdminOrder["status"]] || "border-border/30"}`}>
+                          <span
+                            className={`font-mono text-[10px] px-1.5 py-0.5 border ${STATUS_BADGE[h.status as AdminOrder["status"]] || "border-border/30"}`}
+                          >
                             {h.status.toUpperCase()}
                           </span>
-                          {h.note && <p className="text-xs text-muted-foreground mt-0.5">{h.note}</p>}
+                          {h.note && (
+                            <p className="text-xs text-muted-foreground mt-0.5">{h.note}</p>
+                          )}
                           <p className="font-mono text-[10px] text-muted-foreground/60">
                             {new Date(h.createdAt).toLocaleString()}
                           </p>
@@ -320,24 +409,39 @@ export function OrdersClient() {
                         <thead>
                           <tr className="border-b border-border/30 bg-muted/30">
                             {["Item", "SKU", "Qty", "Price"].map((h) => (
-                              <th key={h} className="p-2 font-mono text-[10px] text-muted-foreground">{h}</th>
+                              <th
+                                key={h}
+                                className="p-2 font-mono text-[10px] text-muted-foreground"
+                              >
+                                {h}
+                              </th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {selected.items.map((item, i) => (
                             <tr key={i} className="border-b border-border/30 last:border-b-0">
-                              <td className="p-2 text-sm">{item.name} <span className="text-muted-foreground text-xs">{item.size}/{item.color}</span></td>
-                              <td className="p-2 font-mono text-[10px] text-muted-foreground">{item.sku}</td>
+                              <td className="p-2 text-sm">
+                                {item.name}{" "}
+                                <span className="text-muted-foreground text-xs">
+                                  {item.size}/{item.color}
+                                </span>
+                              </td>
+                              <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                                {item.sku}
+                              </td>
                               <td className="p-2 font-mono text-xs">{item.qty}</td>
-                              <td className="p-2 font-mono text-xs">{money(item.price, selected.currency)}</td>
+                              <td className="p-2 font-mono text-xs">
+                                {money(item.price, selected.currency)}
+                              </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                     <div className="text-right mt-2 font-mono text-sm">
-                      Total: <span className="font-bold">{money(selected.total, selected.currency)}</span>
+                      Total:{" "}
+                      <span className="font-bold">{money(selected.total, selected.currency)}</span>
                     </div>
                   </div>
                 )}
@@ -358,9 +462,13 @@ export function OrdersClient() {
                     onChange={(e) => setNewStatus(e.target.value as AdminOrder["status"])}
                     className="w-full bg-muted technical-border px-3 py-2 font-mono text-xs"
                   >
-                    {(["pending", "paid", "shipped", "delivered", "cancelled"] as const).map((s) => (
-                      <option key={s} value={s}>{s.toUpperCase()}</option>
-                    ))}
+                    {(["pending", "paid", "shipped", "delivered", "cancelled"] as const).map(
+                      (s) => (
+                        <option key={s} value={s}>
+                          {s.toUpperCase()}
+                        </option>
+                      ),
+                    )}
                   </select>
                   <input
                     value={statusNote}
