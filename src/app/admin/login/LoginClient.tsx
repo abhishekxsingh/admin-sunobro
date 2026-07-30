@@ -43,7 +43,10 @@ export function LoginClient() {
       // status 0 = fetch never reached a server; 404 here means this same
       // Next.js app has no /api/admin/auth/login route yet, i.e. no backend
       // is wired up — both read as "not connected" from the user's side.
-      if (err instanceof ApiError && (err.status === 0 || err.status === 404 || err.status === 500)) {
+      if (
+        err instanceof ApiError &&
+        (err.status === 0 || err.status === 404 || err.status === 500)
+      ) {
         setBackendUnreachable(true);
         setError(`Backend not reachable. Once it's live, sign-in will work here.`);
       } else if (err instanceof ApiError) {

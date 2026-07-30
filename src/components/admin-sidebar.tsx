@@ -16,12 +16,7 @@ import { Logo } from "@/components/logo";
 import { useTheme } from "@/hooks/use-theme";
 
 export type AdminSidebarPage =
-  | "dashboard"
-  | "orders"
-  | "products"
-  | "inventory"
-  | "settings"
-  | "profile";
+  "dashboard" | "orders" | "products" | "inventory" | "settings" | "profile";
 
 type NavItem = {
   label: string;
