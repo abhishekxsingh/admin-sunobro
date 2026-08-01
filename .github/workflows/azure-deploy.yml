@@ -36,8 +36,14 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Assemble standalone output
+        run: |
+          cp -r .next/static .next/standalone/.next/static
+          cp -r public .next/standalone/public
+
       - name: Zip artifact for deployment
-        run: zip -r release.zip .next node_modules public package.json next.config.ts -x ".next/cache/*"
+        working-directory: .next/standalone
+        run: zip -r ../../release.zip .
 
       - name: Login to Azure
         uses: azure/login@v2
