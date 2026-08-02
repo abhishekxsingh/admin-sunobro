@@ -15,35 +15,15 @@ env:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    env:
-      NEXT_PUBLIC_API_BASE_URL: https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net
-      NEXT_PUBLIC_SITE_URL: https://sunobro-admin.azurewebsites.net
     steps:
       - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9.15.9
 
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-      - name: Assemble standalone output
-        run: |
-          cp -r .next/static .next/standalone/.next/static
-          cp -r public .next/standalone/public
 
       - name: Zip artifact for deployment
-        working-directory: .next/standalone
-        run: zip -r ../../release.zip .
+        run: zip -r release.zip . -x "node_modules/*" ".git/*" ".next/*"
 
       - name: Login to Azure
         uses: azure/login@v2
