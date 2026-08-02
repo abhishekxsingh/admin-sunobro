@@ -1,8 +1,8 @@
 /**
- * Base URL for the SunoBro admin backend (preflight Azure App Service).
- * Every path in `endpoints.ts` is appended to this base as-is.
+ * Same-origin `/api` — Next.js rewrites proxy to the Azure backend
+ * (see next.config.ts), so the browser never hits a cross-origin URL (no CORS).
  */
-export const API_BASE_URL = "https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net";
+export const API_BASE_URL = "/api";
 
 export class ApiError extends Error {
   status: number;
