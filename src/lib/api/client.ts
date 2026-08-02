@@ -1,12 +1,8 @@
 /**
- * Base URL for the SunoBro admin backend. Defaults to same-origin `/api` so
- * a backend deployed behind this app (or proxied via next.config rewrites)
- * works with zero config. Point NEXT_PUBLIC_API_BASE_URL at a separate
- * origin (e.g. https://api.sunobro.com) if the backend is deployed on its
- * own host — every path below is appended to this base as-is, so keep the
- * backend's route paths matching the ones in `endpoints.ts`.
+ * Base URL for the SunoBro admin backend (preflight Azure App Service).
+ * Every path in `endpoints.ts` is appended to this base as-is.
  */
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+export const API_BASE_URL = "https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net";
 
 export class ApiError extends Error {
   status: number;
