@@ -1,8 +1,10 @@
 /**
- * Same-origin `/api` — Next.js rewrites proxy to the Azure backend
- * (see next.config.ts), so the browser never hits a cross-origin URL (no CORS).
+ * Base URL for the SunoBro backend. Defaults to the deployed API.
+ * Override with NEXT_PUBLIC_API_BASE_URL.
  */
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  "https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net";
 
 export class ApiError extends Error {
   status: number;
