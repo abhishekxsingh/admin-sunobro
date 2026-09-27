@@ -37,12 +37,12 @@ export const adminProductsApi = {
       `/admin/products${params ? `?page=${params.page ?? 1}&limit=${params.limit ?? 20}` : ""}`,
     ),
   get: (id: string) => api.get<AdminProduct>(`/admin/products/${id}`),
-  create: (payload: Partial<Omit<AdminProduct, "id" | "createdAt" | "updatedAt">>) =>
+  create: (payload: Record<string, unknown>) =>
     api.post<AdminProduct>("/admin/products", payload),
-  update: (id: string, payload: Partial<Omit<AdminProduct, "id" | "createdAt" | "updatedAt">>) =>
+  update: (id: string, payload: Record<string, unknown>) =>
     api.put<AdminProduct>(`/admin/products/${id}`, payload),
   remove: (id: string) => api.delete<void>(`/admin/products/${id}`),
-  bulkCreate: (products: Partial<Omit<AdminProduct, "id" | "createdAt" | "updatedAt">>[]) =>
+  bulkCreate: (products: Record<string, unknown>[]) =>
     api.post<{ created: AdminProduct[]; errors: unknown[] }>("/admin/products/bulk", {
       products,
     }),
