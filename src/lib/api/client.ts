@@ -2,7 +2,7 @@
  * Same-origin `/api` — Next.js rewrites proxy to the Azure backend
  * (see next.config.ts), so the browser never hits a cross-origin URL (no CORS).
  */
-export const API_BASE_URL = "/api";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api";
 
 export class ApiError extends Error {
   status: number;

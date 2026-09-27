@@ -53,6 +53,9 @@ type ProductForm = {
   currency: string;
   images: string;
   sizes: string;
+  colors: string;
+  stock: string;
+  qikinkSku: string;
   status: "active" | "draft";
 };
 const EMPTY_FORM: ProductForm = {
@@ -62,7 +65,10 @@ const EMPTY_FORM: ProductForm = {
   price: "",
   currency: "INR",
   images: "",
-  sizes: "",
+  sizes: "S, M, L, XL",
+  colors: "Black",
+  stock: "100",
+  qikinkSku: "",
   status: "active",
 };
 
@@ -158,6 +164,9 @@ export function ProductsClient() {
       currency: p.currency,
       images: p.images.join(", "),
       sizes: p.sizes.join(", "),
+      colors: "Black",
+      stock: String(p.totalStock || 100),
+      qikinkSku: "",
       status: p.status,
     });
     setEditTarget(p);
@@ -181,6 +190,12 @@ export function ProductsClient() {
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean),
+      colors: form.colors
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+      stock: parseInt(form.stock, 10) || 0,
+      qikinkSku: form.qikinkSku.trim() || undefined,
       status: form.status,
     };
 
@@ -192,24 +207,14 @@ export function ProductsClient() {
         const created = await adminProductsApi.create(payload);
         setProducts((prev) => [created, ...prev]);
       }
-    } catch {
-      if (view === "create") {
-        const local: AdminProduct = {
-          ...payload,
-          id: crypto.randomUUID(),
-          slug: payload.slug || payload.name.toLowerCase().replace(/\s+/g, "-"),
-          inStock: true,
-          variantCount: 0,
-          totalStock: 0,
-          qikinkSynced: false,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setProducts((prev) => [local, ...prev]);
-      }
+      setView("list");
+    } catch (err) {
+      setCsvStatus({
+        message: err instanceof Error ? err.message : "Save failed — is the API running?",
+        error: true,
+      });
     } finally {
       setSaving(false);
-      setView("list");
     }
   };
 
@@ -363,12 +368,18 @@ export function ProductsClient() {
               {[
                 { label: "Name", key: "name", required: true },
                 { label: "Slug (auto-generated if empty)", key: "slug" },
-                { label: "Price", key: "price", type: "number", required: true },
+                { label: "Price (INR)", key: "price", type: "number", required: true },
                 { label: "Currency", key: "currency" },
                 { label: "Images (comma-separated URLs)", key: "images" },
                 { label: "Sizes (comma-separated)", key: "sizes" },
+                { label: "Colors (comma-separated)", key: "colors" },
+                { label: "Stock per size/color", key: "stock", type: "number" },
+                {
+                  label: "Qikink SKU base (from My Products — becomes BASE-SIZE)",
+                  key: "qikinkSku",
+                },
               ].map(({ label, key, required, type }) => (
-                <div key={key} className={key === "images" ? "md:col-span-2" : ""}>
+                <div key={key} className={key === "images" || key === "qikinkSku" ? "md:col-span-2" : ""}>
                   <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
                     {label}
                   </label>
@@ -381,6 +392,12 @@ export function ProductsClient() {
                   />
                 </div>
               ))}
+              <div className="md:col-span-2">
+                <p className="font-mono text-[10px] text-muted-foreground mb-2">
+                  Tip: Create the design in Qikink first, copy the SKU from My Products, paste as
+                  Qikink SKU base. Variants are auto-created for each size × color.
+                </p>
+              </div>
               <div>
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
                   Description

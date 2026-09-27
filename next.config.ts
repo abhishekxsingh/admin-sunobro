@@ -1,16 +1,16 @@
 import type { NextConfig } from "next";
 
 const BACKEND_URL =
-  "https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net";
+  process.env.BACKEND_URL ||
+  "http://localhost:3000";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   async rewrites() {
     return [
       {
-        // Browser → same-origin /api/* (no CORS) → Azure backend
         source: "/api/:path*",
-        destination: `${BACKEND_URL}/:path*`,
+        destination: `${BACKEND_URL.replace(/\/$/, "")}/:path*`,
       },
     ];
   },
