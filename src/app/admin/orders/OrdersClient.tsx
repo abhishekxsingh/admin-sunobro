@@ -111,18 +111,24 @@ const STATUS_BADGE: Record<AdminOrder["status"], string> = {
 const money = (n: number, cur = "INR") =>
   `${cur === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-const fromQueueOrder = (q: QueueOrder, i: number): AdminOrder => ({
-  id: `queue-${i}`,
+const fromQueueOrder = (q: QueueOrder): AdminOrder => ({
+  id: q.id,
   reference: q.ref,
   status: q.status,
   client: q.client,
   total: q.value,
   currency: q.currency,
-  items: [],
+  items: q.items || [],
   statusHistory: [],
   createdAt: q.createdAt,
-  shippingCity: "—",
-  shippingCountry: "—",
+  shippingCity: q.shippingCity || "—",
+  shippingCountry: q.shippingCountry || "—",
+  qikinkOrderId: q.qikinkOrderId,
+  qikinkStatus: q.qikinkStatus,
+  qikinkError: q.qikinkError,
+  trackingLink: q.trackingLink,
+  awb: q.awb,
+  courier: q.courier,
 });
 
 export function OrdersClient() {
@@ -153,7 +159,7 @@ export function OrdersClient() {
       .orders()
       .then((liveOrders) => {
         if (cancelled) return;
-        setOrders(liveOrders.map(fromQueueOrder));
+        setOrders(liveOrders.map((order) => fromQueueOrder(order)));
         setIsDemo(false);
       })
       .catch(() => {
@@ -263,7 +269,7 @@ export function OrdersClient() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/30 bg-muted/30">
-                {["Reference", "Client", "Total", "Status", "Date", ""].map((h) => (
+                {["Reference", "Client", "Total", "Status", "Qikink", "Date", ""].map((h) => (
                   <th key={h} className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
                     {h}
                   </th>
@@ -274,7 +280,7 @@ export function OrdersClient() {
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="p-8 text-center font-mono text-xs text-muted-foreground"
                   >
                     NO ORDERS MATCHING FILTER
@@ -295,6 +301,19 @@ export function OrdersClient() {
                       >
                         {order.status.toUpperCase()}
                       </span>
+                    </td>
+                    <td className="p-4 font-mono text-[10px] text-muted-foreground">
+                      {order.qikinkError || order.qikinkStatus || "—"}
+                      {order.trackingLink && (
+                        <a
+                          href={order.trackingLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block text-primary hover:underline"
+                        >
+                          Track
+                        </a>
+                      )}
                     </td>
                     <td className="p-4 font-mono text-[11px] text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString()}
@@ -452,6 +471,26 @@ export function OrdersClient() {
                   <p className="font-mono text-[11px] text-muted-foreground">
                     {selected.client} · {selected.shippingCity}, {selected.shippingCountry}
                   </p>
+                  {selected.qikinkStatus && (
+                    <p className="font-mono text-[11px] text-muted-foreground mt-2">
+                      Qikink: {selected.qikinkStatus}
+                      {selected.courier ? ` · ${selected.courier}` : ""}
+                      {selected.awb ? ` · AWB ${selected.awb}` : ""}
+                    </p>
+                  )}
+                  {selected.qikinkError && (
+                    <p className="font-mono text-[11px] text-destructive mt-2">{selected.qikinkError}</p>
+                  )}
+                  {selected.trackingLink && (
+                    <a
+                      href={selected.trackingLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-mono text-[11px] text-primary hover:underline mt-2 inline-block"
+                    >
+                      Open tracking
+                    </a>
+                  )}
                 </div>
 
                 {/* Status update */}
