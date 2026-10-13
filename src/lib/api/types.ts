@@ -26,12 +26,22 @@ export type InventoryItem = {
 };
 
 export type QueueOrder = {
+  id: string;
   ref: string;
   client: string;
   value: number;
   currency: string;
   status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
+  shippingCity?: string;
+  shippingCountry?: string;
+  items?: OrderLineItem[];
+  qikinkOrderId?: string | null;
+  qikinkStatus?: string | null;
+  qikinkError?: string | null;
+  trackingLink?: string | null;
+  awb?: string | null;
+  courier?: string | null;
 };
 
 export type Product = {
@@ -99,6 +109,12 @@ export type AdminOrder = {
   createdAt: string;
   shippingCity: string;
   shippingCountry: string;
+  qikinkOrderId?: string | null;
+  qikinkStatus?: string | null;
+  qikinkError?: string | null;
+  trackingLink?: string | null;
+  awb?: string | null;
+  courier?: string | null;
 };
 
 export type QikinkSyncResult = {
