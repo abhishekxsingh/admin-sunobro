@@ -40,15 +40,13 @@ export function LoginClient() {
       router.push(next);
       router.refresh();
     } catch (err) {
-      // status 0 = fetch never reached a server; 404 here means this same
-      // Next.js app has no /api/admin/auth/login route yet, i.e. no backend
-      // is wired up — both read as "not connected" from the user's side.
-      if (
-        err instanceof ApiError &&
-        (err.status === 0 || err.status === 404 || err.status === 500)
-      ) {
+      // 0 = no response at all; 404/502/503/504 = the /api proxy could not
+      // reach a backend. A 500 is the backend failing, so say that instead.
+      if (err instanceof ApiError && [0, 404, 502, 503, 504].includes(err.status)) {
         setBackendUnreachable(true);
         setError(`Backend not reachable. Once it's live, sign-in will work here.`);
+      } else if (err instanceof ApiError && err.status >= 500) {
+        setError(`Server error (${err.status}) — try again, or check the backend logs.`);
       } else if (err instanceof ApiError) {
         setError(err.status === 401 ? "Invalid email or password." : err.message);
       } else {
@@ -151,7 +149,7 @@ export function LoginClient() {
                 {backendUnreachable && (
                   <>
                     <p className="font-mono text-[10px] mt-2 opacity-70">
-                      NEXT_PUBLIC_API_BASE_URL → POST /admin/auth/login
+                      /api → BACKEND_URL → POST /admin/auth/login
                     </p>
                     <button
                       type="button"

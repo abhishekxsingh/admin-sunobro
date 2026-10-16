@@ -1,10 +1,11 @@
 /**
- * Base URL for the SunoBro backend. Defaults to the deployed API.
- * Override with NEXT_PUBLIC_API_BASE_URL.
+ * The browser always calls this app's own /api, which next.config.ts rewrites
+ * to the backend. Same-origin matters: the backend's sb_admin_session cookie
+ * then belongs to the admin's domain, so middleware.ts can see it, and no
+ * cross-origin CORS or third-party-cookie rules are involved. Point the proxy
+ * at a backend with BACKEND_URL (e.g. http://localhost:4000 for local dev).
  */
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net";
+export const API_BASE_URL = "/api";
 
 export class ApiError extends Error {
   status: number;
