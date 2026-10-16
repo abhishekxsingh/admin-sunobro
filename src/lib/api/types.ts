@@ -22,7 +22,10 @@ export type InventoryItem = {
   sku: string;
   name: string;
   stock: number;
-  status: "OPTIMAL" | "CRITICAL" | "LOW";
+  /** ON_DEMAND = print-on-demand variant; stock is not enforced. */
+  status: "OPTIMAL" | "CRITICAL" | "LOW" | "ON_DEMAND";
+  tracked?: boolean;
+  qikinkSku?: string | null;
 };
 
 export type QueueOrder = {
@@ -42,6 +45,10 @@ export type QueueOrder = {
   trackingLink?: string | null;
   awb?: string | null;
   courier?: string | null;
+  qikinkAttempts?: number;
+  qikinkSyncedAt?: string | null;
+  paymentGateway?: "razorpay" | "manual" | "cod" | string;
+  source?: "storefront" | "admin";
 };
 
 export type Product = {
@@ -64,9 +71,14 @@ export type AdminProduct = {
   sizes: string[];
   inStock: boolean;
   status: "active" | "draft";
+  /** Off for print-on-demand: stock is never decremented or enforced. */
+  trackInventory: boolean;
   variantCount: number;
+  /** Variants that have a Qikink SKU. Publishing requires mappedCount === variantCount. */
+  mappedCount: number;
   totalStock: number;
   qikinkSynced: boolean;
+  variants?: ProductVariant[];
   createdAt: string;
   updatedAt: string;
 };
@@ -87,6 +99,8 @@ export type OrderLineItem = {
   size: string;
   color: string;
   sku: string;
+  /** The Qikink "My Products" SKU this line was (or will be) sent as. */
+  qikinkSku?: string | null;
   price: number;
   qty: number;
 };
@@ -115,10 +129,38 @@ export type AdminOrder = {
   trackingLink?: string | null;
   awb?: string | null;
   courier?: string | null;
+  qikinkAttempts?: number;
+  qikinkSyncedAt?: string | null;
+  paymentGateway?: "razorpay" | "manual" | "cod" | string;
+  source?: "storefront" | "admin";
 };
 
 export type QikinkSyncResult = {
   synced: number;
+  message: string;
+};
+
+export type AdminCreateOrderPayload = {
+  items: { sku: string; qty: number }[];
+  shipping: {
+    firstName: string;
+    lastName: string;
+    street: string;
+    city: string;
+    state?: string;
+    postalCode: string;
+    country: string;
+    email?: string;
+    phone: string;
+  };
+  paymentMethod: "prepaid" | "cod";
+  note?: string;
+  pushToQikink?: boolean;
+};
+
+export type QikinkStatus = {
+  connected: boolean;
+  env?: string;
   message: string;
 };
 
