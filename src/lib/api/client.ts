@@ -37,8 +37,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     let message = res.statusText || `Request failed (${res.status})`;
     if ((res.headers.get("content-type") ?? "").includes("application/json")) {
       try {
-        const data = (await res.json()) as { message?: string };
-        if (data?.message) message = data.message;
+        const data = (await res.json()) as {
+          message?: string;
+          details?: Array<{ message?: string; name?: string }>;
+        };
+        if (data?.details?.[0]?.message) message = data.details[0].message;
+        else if (data?.message) message = data.message;
       } catch {
         // ignore malformed JSON body, keep the statusText fallback
       }

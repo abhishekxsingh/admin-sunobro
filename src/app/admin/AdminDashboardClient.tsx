@@ -36,6 +36,7 @@ const DEMO_INVENTORY: InventoryItem[] = [
 
 const DEMO_QUEUE: QueueOrder[] = [
   {
+    id: "demo-4921-A",
     ref: "#ORD-4921-A",
     client: "Vector Dynamics Ltd.",
     value: 12450,
@@ -44,6 +45,7 @@ const DEMO_QUEUE: QueueOrder[] = [
     createdAt: new Date().toISOString(),
   },
   {
+    id: "demo-5012-K",
     ref: "#ORD-5012-K",
     client: "H. Matsumoto (Individual)",
     value: 2800,
@@ -52,6 +54,7 @@ const DEMO_QUEUE: QueueOrder[] = [
     createdAt: new Date().toISOString(),
   },
   {
+    id: "demo-5015-Z",
     ref: "#ORD-5015-Z",
     client: "Aether Research",
     value: 45120,
@@ -64,13 +67,15 @@ const DEMO_QUEUE: QueueOrder[] = [
 const INVENTORY_ICONS = [MemoryStick, Cable, CircuitBoard];
 
 const statusTone = (status: InventoryItem["status"]) =>
-  status === "OPTIMAL"
-    ? "bg-secondary/10 text-secondary border-secondary/20"
-    : status === "CRITICAL"
-      ? "bg-tertiary/10 text-tertiary border-tertiary/20"
-      : "bg-destructive/10 text-destructive border-destructive/20";
+  status === "ON_DEMAND"
+    ? "border-border/40 text-muted-foreground"
+    : status === "OPTIMAL"
+      ? "bg-secondary/10 text-secondary border-secondary/20"
+      : status === "CRITICAL"
+        ? "bg-tertiary/10 text-tertiary border-tertiary/20"
+        : "bg-destructive/10 text-destructive border-destructive/20";
 
-const money = (n: number, currency = "USD") =>
+const money = (n: number, currency = "INR") =>
   `${currency === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const QUICK_NAV = [
@@ -106,9 +111,17 @@ const QUICK_NAV = [
 
 export function AdminDashboardClient() {
   const router = useRouter();
-  const [stats, setStats] = useState(DEMO_STATS);
-  const [inventory, setInventory] = useState(DEMO_INVENTORY);
-  const [queue, setQueue] = useState(DEMO_QUEUE);
+  // Start empty and only show demo data if the API is unreachable, so real
+  // admins never see fake numbers flash in (and SSR/CSR dates match).
+  const [stats, setStats] = useState<AdminStats>({
+    grossRevenue24h: 0,
+    revenueChangePct: 0,
+    activeOrders: 0,
+    conversionRatePct: 0,
+    conversionChangePct: 0,
+  });
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [queue, setQueue] = useState<QueueOrder[]>([]);
   const [isDemo, setIsDemo] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
@@ -135,7 +148,11 @@ export function AdminDashboardClient() {
         setIsDemo(false);
       })
       .catch(() => {
-        if (!cancelled) setIsDemo(true);
+        if (cancelled) return;
+        setStats(DEMO_STATS);
+        setInventory(DEMO_INVENTORY);
+        setQueue(DEMO_QUEUE);
+        setIsDemo(true);
       });
 
     return () => {
@@ -155,7 +172,11 @@ export function AdminDashboardClient() {
     }
   };
 
-  const criticalInventory = [...inventory].sort((a, b) => a.stock - b.stock).slice(0, 3);
+  // Print-on-demand variants never run out, so only tracked stock can be critical.
+  const criticalInventory = inventory
+    .filter((item) => item.status === "CRITICAL" || item.status === "LOW")
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 3);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -294,6 +315,11 @@ export function AdminDashboardClient() {
               </Link>
             </div>
             <div className="technical-border bg-surface-lowest overflow-hidden">
+              {criticalInventory.length === 0 && (
+                <p className="p-6 font-mono text-[11px] text-muted-foreground">
+                  NO TRACKED STOCK RUNNING LOW — PRINT-ON-DEMAND ITEMS NEVER RUN OUT
+                </p>
+              )}
               {criticalInventory.map((item, i) => {
                 const Icon = INVENTORY_ICONS[i % INVENTORY_ICONS.length];
                 return (
