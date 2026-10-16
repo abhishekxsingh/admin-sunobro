@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ImageOff, Plus, RefreshCw, Upload } from "lucide-react";
+import { Download, ImageOff, Plus, Trash2, Upload, Wand2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
+import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
-import { parseProductsCsv } from "@/lib/csv";
+import { CATALOG_CSV_TEMPLATE, parseCatalogCsv } from "@/lib/csv";
 import type { AdminProduct, AdminUser } from "@/lib/api/types";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
@@ -14,31 +15,35 @@ const DEMO_PRODUCTS: AdminProduct[] = [
     slug: "sunobro-technical-tee",
     name: "SunoBro Technical Tee",
     description: "Precision-cut technical tee for the developer environment.",
-    price: 4150,
+    price: 799,
     currency: "INR",
     images: [],
     sizes: ["S", "M", "L", "XL"],
     inStock: true,
     status: "active",
-    variantCount: 4,
-    totalStock: 240,
-    qikinkSynced: false,
+    trackInventory: false,
+    variantCount: 8,
+    mappedCount: 8,
+    totalStock: 0,
+    qikinkSynced: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
   {
     id: "demo-p2",
-    slug: "circuit-cap",
-    name: "Circuit Cap",
-    description: "6-panel structured cap with embroidered circuit logo.",
-    price: 2800,
+    slug: "circuit-hoodie",
+    name: "Circuit Hoodie",
+    description: "Fleece hoodie with front circuit print.",
+    price: 1499,
     currency: "INR",
     images: [],
-    sizes: ["One Size"],
+    sizes: ["M", "L"],
     inStock: true,
-    status: "active",
-    variantCount: 2,
-    totalStock: 80,
+    status: "draft",
+    trackInventory: false,
+    variantCount: 4,
+    mappedCount: 2,
+    totalStock: 0,
     qikinkSynced: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -50,30 +55,44 @@ type ProductForm = {
   slug: string;
   description: string;
   price: string;
-  currency: string;
   images: string;
-  sizes: string;
-  colors: string;
-  stock: string;
-  qikinkSku: string;
   status: "active" | "draft";
+  trackInventory: boolean;
 };
+
+type VariantRow = {
+  size: string;
+  color: string;
+  sku: string;
+  qikinkSku: string;
+  price: string;
+  stock: string;
+};
+
 const EMPTY_FORM: ProductForm = {
   name: "",
   slug: "",
   description: "",
   price: "",
-  currency: "INR",
   images: "",
-  sizes: "S, M, L, XL",
-  colors: "Black",
-  stock: "100",
-  qikinkSku: "",
-  status: "active",
+  status: "draft",
+  trackInventory: false,
 };
+
+const rowKey = (size: string, color: string) =>
+  `${size.trim().toLowerCase()}|${color.trim().toLowerCase()}`;
+
+const splitList = (value: string) =>
+  value
+    .split(/[,\n]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 const money = (n: number, cur = "INR") =>
   `${cur === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+
+const errorMessage = (err: unknown, fallback: string) =>
+  err instanceof ApiError || err instanceof Error ? err.message : fallback;
 
 function ProductThumb({ src, alt }: { src: string; alt: string }) {
   const [errored, setErrored] = useState(!src);
@@ -94,19 +113,38 @@ function ProductThumb({ src, alt }: { src: string; alt: string }) {
   );
 }
 
+function MappingBadge({ mapped, total }: { mapped: number; total: number }) {
+  const complete = total > 0 && mapped === total;
+  return (
+    <span
+      className={`font-mono text-[10px] px-2 py-0.5 border ${
+        complete
+          ? "bg-secondary/10 text-secondary border-secondary/20"
+          : "bg-destructive/10 text-destructive border-destructive/20"
+      }`}
+    >
+      {complete ? "MAPPED" : "UNMAPPED"} {mapped}/{total}
+    </span>
+  );
+}
+
 export function ProductsClient() {
   const router = useRouter();
-  const [products, setProducts] = useState<AdminProduct[]>(DEMO_PRODUCTS);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [isDemo, setIsDemo] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [view, setView] = useState<"list" | "create" | "edit">("list");
   const [editTarget, setEditTarget] = useState<AdminProduct | null>(null);
   const [form, setForm] = useState<ProductForm>(EMPTY_FORM);
+  const [variants, setVariants] = useState<VariantRow[]>([]);
+  const [gridSizes, setGridSizes] = useState("S, M, L, XL");
+  const [gridColors, setGridColors] = useState("Black");
+  const [skuPattern, setSkuPattern] = useState("");
+  const [colorCodes, setColorCodes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [syncingId, setSyncingId] = useState<string | null>(null);
-  const [syncResult, setSyncResult] = useState<{ id: string; message: string } | null>(null);
   const [uploadingCsv, setUploadingCsv] = useState(false);
   const [csvStatus, setCsvStatus] = useState<{ message: string; error?: boolean } | null>(null);
 
@@ -123,20 +161,36 @@ export function ProductsClient() {
       });
 
     adminProductsApi
-      .list()
+      .list({ page: 1, limit: 100 })
       .then((liveProducts) => {
         if (cancelled) return;
         setProducts(liveProducts);
         setIsDemo(false);
       })
       .catch(() => {
-        if (!cancelled) setIsDemo(true);
+        if (cancelled) return;
+        setProducts(DEMO_PRODUCTS);
+        setIsDemo(true);
       });
 
     return () => {
       cancelled = true;
     };
   }, [router]);
+
+  const mappedCount = variants.filter((v) => v.qikinkSku.trim()).length;
+  const fullyMapped = variants.length > 0 && mappedCount === variants.length;
+
+  const liveUnmapped = products.filter((p) => p.status === "active" && !p.qikinkSynced);
+
+  const duplicateQikinkSkus = useMemo(() => {
+    const counts = new Map<string, number>();
+    variants.forEach((v) => {
+      const sku = v.qikinkSku.trim();
+      if (sku) counts.set(sku, (counts.get(sku) || 0) + 1);
+    });
+    return new Set([...counts.entries()].filter(([, n]) => n > 1).map(([sku]) => sku));
+  }, [variants]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -152,51 +206,126 @@ export function ProductsClient() {
 
   const openCreate = () => {
     setForm(EMPTY_FORM);
+    setVariants([]);
+    setGridSizes("S, M, L, XL");
+    setGridColors("Black");
     setEditTarget(null);
+    setFormError(null);
     setView("create");
   };
-  const openEdit = (p: AdminProduct) => {
+
+  const openEdit = async (p: AdminProduct) => {
+    setFormError(null);
+    setEditTarget(p);
     setForm({
       name: p.name,
       slug: p.slug,
       description: p.description,
       price: String(p.price),
-      currency: p.currency,
-      images: p.images.join(", "),
-      sizes: p.sizes.join(", "),
-      colors: "Black",
-      stock: String(p.totalStock || 100),
-      qikinkSku: "",
+      images: p.images.join("\n"),
       status: p.status,
+      trackInventory: p.trackInventory,
     });
-    setEditTarget(p);
+    setVariants([]);
     setView("edit");
+    try {
+      // The list payload has no variants — load them so the mapping is editable.
+      const full = await adminProductsApi.get(p.id);
+      const rows = (full.variants || []).map((v) => ({
+        size: v.size,
+        color: v.color,
+        sku: v.sku,
+        qikinkSku: v.qikinkSku || "",
+        price: v.price != null ? String(v.price) : "",
+        stock: String(v.stock ?? 0),
+      }));
+      setVariants(rows);
+      setGridSizes([...new Set(rows.map((r) => r.size))].join(", "));
+      setGridColors([...new Set(rows.map((r) => r.color))].join(", "));
+    } catch (err) {
+      setFormError(errorMessage(err, "Could not load this product's variants."));
+    }
   };
+
+  // Rebuild sizes × colours, keeping whatever was already entered per variant.
+  const buildGrid = () => {
+    const sizes = splitList(gridSizes);
+    const colors = splitList(gridColors);
+    const existing = new Map(variants.map((v) => [rowKey(v.size, v.color), v]));
+    setVariants(
+      colors.flatMap((color) =>
+        sizes.map(
+          (size) =>
+            existing.get(rowKey(size, color)) || {
+              size,
+              color,
+              sku: "",
+              qikinkSku: "",
+              price: "",
+              stock: "0",
+            },
+        ),
+      ),
+    );
+  };
+
+  // Fill empty Qikink SKUs from a pattern like "MVnHs-{COLOR}-{SIZE}", with
+  // optional colour codes such as "Black=Bk, White=Wh".
+  const fillFromPattern = () => {
+    if (!skuPattern.trim()) return;
+    const codes = new Map(
+      splitList(colorCodes)
+        .map((pair) => pair.split("=").map((s) => s.trim()))
+        .filter(([name, code]) => name && code)
+        .map(([name, code]) => [name.toLowerCase(), code]),
+    );
+    setVariants((rows) =>
+      rows.map((row) =>
+        row.qikinkSku.trim()
+          ? row
+          : {
+              ...row,
+              qikinkSku: skuPattern
+                .replaceAll("{COLOR}", codes.get(row.color.toLowerCase()) || row.color)
+                .replaceAll("{SIZE}", row.size),
+            },
+      ),
+    );
+  };
+
+  const updateRow = (index: number, patch: Partial<VariantRow>) =>
+    setVariants((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError(null);
+    if (variants.length === 0) {
+      setFormError("Build the variant grid first — every product needs at least one size/colour.");
+      return;
+    }
+    if (duplicateQikinkSkus.size > 0) {
+      setFormError("Each variant needs its own Qikink SKU — fix the highlighted duplicates.");
+      return;
+    }
+
     setSaving(true);
     const payload = {
       name: form.name.trim(),
       slug: form.slug.trim() || undefined,
       description: form.description.trim(),
       price: parseFloat(form.price) || 0,
-      currency: form.currency,
-      images: form.images
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      sizes: form.sizes
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      colors: form.colors
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-      stock: parseInt(form.stock, 10) || 0,
-      qikinkSku: form.qikinkSku.trim() || undefined,
+      currency: "INR",
+      images: splitList(form.images),
       status: form.status,
+      trackInventory: form.trackInventory,
+      variants: variants.map((v) => ({
+        size: v.size.trim(),
+        color: v.color.trim(),
+        sku: v.sku.trim() || undefined,
+        qikinkSku: v.qikinkSku.trim() || undefined,
+        price: v.price.trim() ? parseFloat(v.price) : undefined,
+        stock: form.trackInventory ? parseInt(v.stock, 10) || 0 : undefined,
+      })),
     };
 
     try {
@@ -209,38 +338,32 @@ export function ProductsClient() {
       }
       setView("list");
     } catch (err) {
-      setCsvStatus({
-        message: err instanceof Error ? err.message : "Save failed — is the API running?",
-        error: true,
-      });
+      setFormError(errorMessage(err, "Save failed — is the API running?"));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (product: AdminProduct) => {
+    if (!window.confirm(`Delete ${product.name}? Past orders keep their line items.`)) return;
     setDeletingId(product.id);
     try {
       await adminProductsApi.remove(product.id);
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
-    } catch {
-      setProducts((prev) => prev.filter((p) => p.id !== product.id));
+    } catch (err) {
+      setCsvStatus({ message: errorMessage(err, "Delete failed."), error: true });
     } finally {
       setDeletingId(null);
     }
   };
 
-  const handleSync = async (product: AdminProduct) => {
-    setSyncingId(product.id);
-    setSyncResult(null);
-    try {
-      const result = await adminProductsApi.syncQikink(product.id);
-      setSyncResult({ id: product.id, message: result.message });
-    } catch {
-      setSyncResult({ id: product.id, message: "Qikink sync not yet configured — see Settings." });
-    } finally {
-      setSyncingId(null);
-    }
+  const downloadTemplate = () => {
+    const url = URL.createObjectURL(new Blob([CATALOG_CSV_TEMPLATE], { type: "text/csv" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sunobro-catalog-template.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -250,50 +373,31 @@ export function ProductsClient() {
     setUploadingCsv(true);
     setCsvStatus(null);
     try {
-      const text = await file.text();
-      const rows = parseProductsCsv(text);
-      if (rows.length === 0) {
+      const { products: parsed, problems } = parseCatalogCsv(await file.text());
+      if (parsed.length === 0) {
         setCsvStatus({
-          message: "No rows found — check CSV headers (name, size, image url, price).",
+          message: problems[0] || "No products found — download the template for the format.",
           error: true,
         });
         return;
       }
-      try {
-        const { created } = await adminProductsApi.bulkCreate(
-          rows.map((r) => ({
-            name: r.name,
-            price: r.price,
-            images: r.imageUrl ? [r.imageUrl] : [],
-            sizes: r.size ? [r.size] : [],
-          })),
-        );
-        setProducts((prev) => [...created, ...prev]);
-      } catch {
-        setProducts((prev) => [
-          ...rows.map((r) => ({
-            id: crypto.randomUUID(),
-            slug: r.name.toLowerCase().replace(/\s+/g, "-"),
-            name: r.name,
-            description: "",
-            price: r.price,
-            currency: "INR",
-            images: r.imageUrl ? [r.imageUrl] : [],
-            sizes: r.size ? [r.size] : [],
-            inStock: true,
-            status: "active" as const,
-            variantCount: 0,
-            totalStock: 0,
-            qikinkSynced: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          })),
-          ...prev,
-        ]);
-      }
-      setCsvStatus({ message: `Imported ${rows.length} product${rows.length === 1 ? "" : "s"}.` });
-    } catch {
-      setCsvStatus({ message: "Could not read that CSV file.", error: true });
+      const { created, errors } = await adminProductsApi.bulkCreate(parsed);
+      setProducts((prev) => [...created, ...prev]);
+      const failed = errors.map((f) => `${f.name}: ${f.errors.map((x) => x.message).join("; ")}`);
+      const drafts = created.filter((p) => p.status === "draft").length;
+      setCsvStatus({
+        message: [
+          `Imported ${created.length} product${created.length === 1 ? "" : "s"}.`,
+          drafts ? `${drafts} saved as DRAFT (unmapped variants).` : "",
+          ...problems,
+          ...failed,
+        ]
+          .filter(Boolean)
+          .join(" "),
+        error: failed.length > 0 || problems.length > 0,
+      });
+    } catch (err) {
+      setCsvStatus({ message: errorMessage(err, "Could not import that CSV file."), error: true });
     } finally {
       setUploadingCsv(false);
     }
@@ -325,10 +429,17 @@ export function ProductsClient() {
             <div>
               <h2 className="text-4xl font-bold">Product Catalog</h2>
               <p className="font-mono text-[10px] text-muted-foreground mt-1">
-                {products.length} PRODUCT{products.length === 1 ? "" : "S"} LISTED
+                {products.length} PRODUCT{products.length === 1 ? "" : "S"} ·{" "}
+                {products.filter((p) => p.status === "active").length} LIVE
               </p>
             </div>
             <div className="flex gap-3">
+              <button
+                onClick={downloadTemplate}
+                className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
+              >
+                <Download className="h-3.5 w-3.5" /> CSV TEMPLATE
+              </button>
               <label className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
                 <Upload className="h-3.5 w-3.5" />
                 {uploadingCsv ? "UPLOADING..." : "UPLOAD CSV"}
@@ -350,6 +461,32 @@ export function ProductsClient() {
           </div>
         </header>
 
+        {/* How listing ↔ Qikink works */}
+        <section className="mb-8 p-4 technical-border bg-surface-container font-mono text-[10px] text-muted-foreground grid md:grid-cols-4 gap-4">
+          {[
+            ["01 · DESIGN", "Create the product in dashboard.qikink.com → My Products."],
+            ["02 · COPY SKUS", "Each size × colour there has its own SKU (e.g. MVnHs-Wh-M)."],
+            ["03 · MAP", "Add the product here and paste each SKU onto its variant row."],
+            [
+              "04 · PUBLISH",
+              "ACTIVE unlocks once every variant is mapped. Paid orders push by SKU.",
+            ],
+          ].map(([title, body]) => (
+            <div key={title}>
+              <p className="text-primary mb-1">{title}</p>
+              <p>{body}</p>
+            </div>
+          ))}
+        </section>
+
+        {liveUnmapped.length > 0 && (
+          <div className="mb-6 p-4 technical-border border-destructive/40 bg-destructive/5 font-mono text-[11px] text-destructive">
+            {liveUnmapped.length} LIVE PRODUCT{liveUnmapped.length === 1 ? " IS" : "S ARE"} MISSING
+            QIKINK SKUS — paid orders for them cannot be printed. Map them (MAP SKUS) or switch them
+            to DRAFT: {liveUnmapped.map((p) => p.name).join(", ")}.
+          </div>
+        )}
+
         {csvStatus && (
           <p
             className={`mb-4 font-mono text-[11px] ${csvStatus.error ? "text-destructive" : "text-secondary"}`}
@@ -360,45 +497,75 @@ export function ProductsClient() {
 
         {/* Create / Edit form */}
         {(view === "create" || view === "edit") && (
-          <form onSubmit={handleSave} className="mb-8 p-6 technical-border bg-surface-lowest">
-            <p className="font-mono text-[11px] uppercase tracking-widest mb-4">
+          <form
+            onSubmit={handleSave}
+            className="mb-8 p-6 technical-border bg-surface-lowest space-y-8"
+          >
+            <p className="font-mono text-[11px] uppercase tracking-widest">
               {view === "create" ? "New Product" : `Edit: ${editTarget?.name}`}
             </p>
+
+            {/* Storefront listing */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { label: "Name", key: "name", required: true },
-                { label: "Slug (auto-generated if empty)", key: "slug" },
-                { label: "Price (INR)", key: "price", type: "number", required: true },
-                { label: "Currency", key: "currency" },
-                { label: "Images (comma-separated URLs)", key: "images" },
-                { label: "Sizes (comma-separated)", key: "sizes" },
-                { label: "Colors (comma-separated)", key: "colors" },
-                { label: "Stock per size/color", key: "stock", type: "number" },
-                {
-                  label: "Qikink SKU base (from My Products — becomes BASE-SIZE)",
-                  key: "qikinkSku",
-                },
-              ].map(({ label, key, required, type }) => (
-                <div key={key} className={key === "images" || key === "qikinkSku" ? "md:col-span-2" : ""}>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    {label}
-                  </label>
-                  <input
-                    required={required}
-                    type={type || "text"}
-                    value={form[key as keyof typeof form]}
-                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-              ))}
-              <div className="md:col-span-2">
-                <p className="font-mono text-[10px] text-muted-foreground mb-2">
-                  Tip: Create the design in Qikink first, copy the SKU from My Products, paste as
-                  Qikink SKU base. Variants are auto-created for each size × color.
-                </p>
+              <div>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Name
+                </label>
+                <input
+                  required
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
               </div>
               <div>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Slug (URL — auto from name if empty)
+                </label>
+                <input
+                  value={form.slug}
+                  onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Base price (INR)
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                />
+              </div>
+              <div>
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Inventory
+                </label>
+                <label className="flex items-center gap-2 font-mono text-[11px] py-2">
+                  <input
+                    type="checkbox"
+                    checked={form.trackInventory}
+                    onChange={(e) => setForm((f) => ({ ...f, trackInventory: e.target.checked }))}
+                  />
+                  TRACK STOCK (leave off for print-on-demand — never sells out)
+                </label>
+              </div>
+              <div className="md:col-span-2">
+                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  Image URLs (one per line — first is the cover; Qikink mockup links work)
+                </label>
+                <textarea
+                  value={form.images}
+                  onChange={(e) => setForm((f) => ({ ...f, images: e.target.value }))}
+                  rows={2}
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border resize-y"
+                />
+              </div>
+              <div className="md:col-span-2">
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
                   Description
                 </label>
@@ -406,47 +573,230 @@ export function ProductsClient() {
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   rows={2}
-                  className="w-full bg-muted px-3 py-2 text-sm technical-border resize-none"
+                  className="w-full bg-muted px-3 py-2 text-sm technical-border resize-y"
                 />
               </div>
+            </div>
+
+            {/* Variants ↔ Qikink */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[11px] uppercase tracking-widest">
+                  Variants → Qikink SKUs
+                </p>
+                <MappingBadge mapped={mappedCount} total={variants.length} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                <div>
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                    Sizes
+                  </label>
+                  <input
+                    value={gridSizes}
+                    onChange={(e) => setGridSizes(e.target.value)}
+                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                    Colours
+                  </label>
+                  <input
+                    value={gridColors}
+                    onChange={(e) => setGridColors(e.target.value)}
+                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={buildGrid}
+                  className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all"
+                >
+                  BUILD GRID
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                <div>
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                    Optional SKU pattern — {"{COLOR}"} and {"{SIZE}"} tokens
+                  </label>
+                  <input
+                    value={skuPattern}
+                    onChange={(e) => setSkuPattern(e.target.value)}
+                    placeholder="MVnHs-{COLOR}-{SIZE}"
+                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                  />
+                </div>
+                <div>
+                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                    Qikink colour codes (optional)
+                  </label>
+                  <input
+                    value={colorCodes}
+                    onChange={(e) => setColorCodes(e.target.value)}
+                    placeholder="Black=Bk, White=Wh"
+                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={fillFromPattern}
+                  disabled={!skuPattern.trim() || variants.length === 0}
+                  className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2 disabled:opacity-40"
+                >
+                  <Wand2 className="h-3 w-3" /> FILL EMPTY
+                </button>
+              </div>
+
+              <div className="technical-border overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border/30 bg-muted/30">
+                      {[
+                        "Size",
+                        "Colour",
+                        "Qikink SKU (from My Products)",
+                        "Price override",
+                        ...(form.trackInventory ? ["Stock"] : []),
+                        "Our SKU",
+                        "",
+                      ].map((h) => (
+                        <th key={h} className="p-2 font-mono text-[10px] text-muted-foreground">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {variants.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={7}
+                          className="p-6 text-center font-mono text-[11px] text-muted-foreground"
+                        >
+                          ENTER SIZES + COLOURS, THEN BUILD GRID
+                        </td>
+                      </tr>
+                    ) : (
+                      variants.map((row, i) => {
+                        const duplicate = duplicateQikinkSkus.has(row.qikinkSku.trim());
+                        const missing = !row.qikinkSku.trim();
+                        return (
+                          <tr
+                            key={rowKey(row.size, row.color) + i}
+                            className="border-b border-border/30 last:border-b-0"
+                          >
+                            <td className="p-2 font-mono text-xs">{row.size}</td>
+                            <td className="p-2 font-mono text-xs">{row.color}</td>
+                            <td className="p-2">
+                              <input
+                                value={row.qikinkSku}
+                                onChange={(e) => updateRow(i, { qikinkSku: e.target.value })}
+                                placeholder="paste Qikink SKU"
+                                className={`w-full bg-muted px-2 py-1 font-mono text-xs technical-border ${
+                                  duplicate || missing ? "border-destructive/60" : ""
+                                }`}
+                              />
+                              {duplicate && (
+                                <p className="font-mono text-[9px] text-destructive mt-0.5">
+                                  USED BY ANOTHER VARIANT
+                                </p>
+                              )}
+                            </td>
+                            <td className="p-2 w-28">
+                              <input
+                                type="number"
+                                min="0"
+                                value={row.price}
+                                onChange={(e) => updateRow(i, { price: e.target.value })}
+                                placeholder={form.price || "base"}
+                                className="w-full bg-muted px-2 py-1 font-mono text-xs technical-border"
+                              />
+                            </td>
+                            {form.trackInventory && (
+                              <td className="p-2 w-24">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  value={row.stock}
+                                  onChange={(e) => updateRow(i, { stock: e.target.value })}
+                                  className="w-full bg-muted px-2 py-1 font-mono text-xs technical-border"
+                                />
+                              </td>
+                            )}
+                            <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                              {row.sku || "auto"}
+                            </td>
+                            <td className="p-2">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setVariants((rows) => rows.filter((_, idx) => idx !== i))
+                                }
+                                className="text-muted-foreground hover:text-destructive"
+                                aria-label={`Remove ${row.size} ${row.color}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Publish */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-2">
-                  Status
+                  Storefront status
                 </label>
                 <div className="flex gap-2">
-                  {(["active", "draft"] as const).map((s) => (
+                  {(["draft", "active"] as const).map((s) => (
                     <button
                       key={s}
                       type="button"
+                      disabled={s === "active" && !fullyMapped}
                       onClick={() => setForm((f) => ({ ...f, status: s }))}
-                      className={`px-4 py-2 font-mono text-[11px] technical-border transition-all ${
+                      className={`px-4 py-2 font-mono text-[11px] technical-border transition-all disabled:opacity-40 ${
                         form.status === s
                           ? "bg-secondary/20 text-secondary border-secondary/40"
                           : "text-muted-foreground"
                       }`}
                     >
-                      {s.toUpperCase()}
+                      {s === "active" ? "ACTIVE (LIVE)" : "DRAFT (HIDDEN)"}
                     </button>
                   ))}
                 </div>
+                {!fullyMapped && (
+                  <p className="font-mono text-[10px] text-muted-foreground mt-1">
+                    Map every variant to a Qikink SKU to publish.
+                  </p>
+                )}
+              </div>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setView("list")}
+                  className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  CANCEL
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {saving ? "SAVING..." : "SAVE PRODUCT"}
+                </button>
               </div>
             </div>
-            <div className="flex gap-3 justify-end mt-6">
-              <button
-                type="button"
-                onClick={() => setView("list")}
-                className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
-              >
-                CANCEL
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
-              >
-                {saving ? "SAVING..." : "SAVE PRODUCT"}
-              </button>
-            </div>
+            {formError && <p className="font-mono text-[11px] text-destructive">{formError}</p>}
           </form>
         )}
 
@@ -455,18 +805,23 @@ export function ProductsClient() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/30 bg-muted/30">
-                {["Product", "Status", "Price", "Stock", "Qikink", "Actions"].map((h) => (
-                  <th key={h} className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
-                    {h}
-                  </th>
-                ))}
+                {["Product", "Status", "Price", "Variants", "Qikink", "Stock", "Actions"].map(
+                  (h) => (
+                    <th
+                      key={h}
+                      className="p-4 font-mono text-[11px] text-muted-foreground uppercase"
+                    >
+                      {h}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
               {products.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={7}
                     className="p-8 text-center font-mono text-xs text-muted-foreground"
                   >
                     NO PRODUCTS YET — ADD ONE OR UPLOAD A CSV
@@ -484,7 +839,7 @@ export function ProductsClient() {
                         <div>
                           <p className="text-sm font-medium">{product.name}</p>
                           <p className="font-mono text-[10px] text-muted-foreground">
-                            {product.slug}
+                            /products/{product.slug}
                           </p>
                         </div>
                       </div>
@@ -497,44 +852,33 @@ export function ProductsClient() {
                             : "border-border/40 text-muted-foreground"
                         }`}
                       >
-                        {product.status.toUpperCase()}
+                        {product.status === "active" ? "LIVE" : "DRAFT"}
                       </span>
                     </td>
                     <td className="p-4 font-mono text-sm">
                       {money(product.price, product.currency)}
                     </td>
-                    <td className="p-4 font-mono text-sm">
-                      {product.totalStock}{" "}
-                      <span className="text-[10px] text-muted-foreground">units</span>
-                    </td>
+                    <td className="p-4 font-mono text-sm">{product.variantCount}</td>
                     <td className="p-4">
-                      {syncResult?.id === product.id ? (
-                        <p
-                          className="font-mono text-[10px] text-tertiary max-w-[120px] truncate"
-                          title={syncResult.message}
-                        >
-                          {syncResult.message}
-                        </p>
+                      <MappingBadge mapped={product.mappedCount} total={product.variantCount} />
+                    </td>
+                    <td className="p-4 font-mono text-sm">
+                      {product.trackInventory ? (
+                        <>
+                          {product.totalStock}{" "}
+                          <span className="text-[10px] text-muted-foreground">units</span>
+                        </>
                       ) : (
-                        <button
-                          onClick={() => handleSync(product)}
-                          disabled={syncingId === product.id}
-                          className="bg-tertiary/10 text-tertiary border border-tertiary/20 font-mono text-[10px] px-2 py-0.5 hover:bg-tertiary/20 transition-all disabled:opacity-50 flex items-center gap-1"
-                        >
-                          <RefreshCw
-                            className={`h-2.5 w-2.5 ${syncingId === product.id ? "animate-spin" : ""}`}
-                          />
-                          {syncingId === product.id ? "SYNCING..." : "SYNC_QIKINK"}
-                        </button>
+                        <span className="text-[10px] text-muted-foreground">ON DEMAND</span>
                       )}
                     </td>
                     <td className="p-4">
                       <div className="flex gap-2">
                         <button
-                          onClick={() => openEdit(product)}
+                          onClick={() => void openEdit(product)}
                           className="font-mono text-[11px] text-primary hover:underline"
                         >
-                          EDIT
+                          {product.qikinkSynced ? "EDIT" : "MAP SKUS"}
                         </button>
                         <button
                           onClick={() => handleDelete(product)}

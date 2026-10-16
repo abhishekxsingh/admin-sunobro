@@ -18,17 +18,19 @@ const DEMO_INVENTORY: InventoryItem[] = [
 const INVENTORY_ICONS = [MemoryStick, Cable, CircuitBoard, Boxes, MemoryStick];
 
 const statusTone = (status: InventoryItem["status"]) =>
-  status === "OPTIMAL"
-    ? "bg-secondary/10 text-secondary border-secondary/20"
-    : status === "CRITICAL"
-      ? "bg-tertiary/10 text-tertiary border-tertiary/20"
-      : "bg-destructive/10 text-destructive border-destructive/20";
+  status === "ON_DEMAND"
+    ? "border-border/40 text-muted-foreground"
+    : status === "OPTIMAL"
+      ? "bg-secondary/10 text-secondary border-secondary/20"
+      : status === "CRITICAL"
+        ? "bg-tertiary/10 text-tertiary border-tertiary/20"
+        : "bg-destructive/10 text-destructive border-destructive/20";
 
 type SortKey = "stock" | "status" | "sku";
 
 export function InventoryClient() {
   const router = useRouter();
-  const [inventory, setInventory] = useState<InventoryItem[]>(DEMO_INVENTORY);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [isDemo, setIsDemo] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
@@ -41,6 +43,7 @@ export function InventoryClient() {
       setInventory(data);
       setIsDemo(false);
     } catch {
+      setInventory(DEMO_INVENTORY);
       setIsDemo(true);
     }
   };
@@ -189,12 +192,23 @@ export function InventoryClient() {
                         <div>
                           <p className="font-mono text-sm">{item.sku}</p>
                           <p className="text-xs text-muted-foreground">{item.name}</p>
+                          <p
+                            className={`font-mono text-[10px] ${item.qikinkSku ? "text-muted-foreground" : "text-destructive"}`}
+                          >
+                            QIKINK: {item.qikinkSku || "NOT MAPPED"}
+                          </p>
                         </div>
                       </div>
                     </td>
                     <td className="p-4 text-right font-mono">
-                      {item.stock.toLocaleString()}{" "}
-                      <span className="text-xs text-muted-foreground">units</span>
+                      {item.status === "ON_DEMAND" ? (
+                        <span className="text-xs text-muted-foreground">print on demand</span>
+                      ) : (
+                        <>
+                          {item.stock.toLocaleString()}{" "}
+                          <span className="text-xs text-muted-foreground">units</span>
+                        </>
+                      )}
                     </td>
                     <td className="p-4 text-center">
                       <span

@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, RefreshCw, Send, X } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { adminApi, adminAuthApi } from "@/lib/api/endpoints";
+import { ApiError } from "@/lib/api/client";
+import { adminApi, adminAuthApi, qikinkApi } from "@/lib/api/endpoints";
 import type { AdminOrder, AdminUser, QueueOrder } from "@/lib/api/types";
+import { NewOrderPanel } from "./NewOrderPanel";
 
 const DEMO_ORDERS: AdminOrder[] = [
   {
@@ -129,11 +131,32 @@ const fromQueueOrder = (q: QueueOrder): AdminOrder => ({
   trackingLink: q.trackingLink,
   awb: q.awb,
   courier: q.courier,
+  qikinkAttempts: q.qikinkAttempts,
+  qikinkSyncedAt: q.qikinkSyncedAt,
+  paymentGateway: q.paymentGateway,
+  source: q.source,
 });
+
+const errorMessage = (err: unknown) =>
+  err instanceof ApiError || err instanceof Error ? err.message : "Request failed.";
+
+// Paid orders that never reached Qikink (failed or skipped push) need an admin.
+// COD orders stay pending (Qikink collects the cash) but are still printable.
+const needsQikinkPush = (o: AdminOrder) =>
+  !o.qikinkOrderId &&
+  (o.status === "paid" || (o.status === "pending" && o.paymentGateway === "cod"));
+
+const PAYMENT_LABEL: Record<string, string> = {
+  razorpay: "RAZORPAY",
+  manual: "PREPAID · ADMIN",
+  cod: "COD",
+};
 
 export function OrdersClient() {
   const router = useRouter();
-  const [orders, setOrders] = useState<AdminOrder[]>(DEMO_ORDERS);
+  // Demo rows carry new Date() timestamps, so they are only swapped in on the
+  // client after a failed fetch — rendering them during SSR breaks hydration.
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isDemo, setIsDemo] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
@@ -142,6 +165,20 @@ export function OrdersClient() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<AdminOrder["status"]>("pending");
   const [statusNote, setStatusNote] = useState("");
+  const [qikinkBusy, setQikinkBusy] = useState<"push" | "sync" | "all" | null>(null);
+  const [notice, setNotice] = useState<{ tone: "info" | "error"; text: string } | null>(null);
+  const [showNewOrder, setShowNewOrder] = useState(false);
+
+  const loadOrders = useCallback(async () => {
+    try {
+      const liveOrders = await adminApi.orders();
+      setOrders(liveOrders.map((order) => fromQueueOrder(order)));
+      setIsDemo(false);
+    } catch {
+      setOrders(DEMO_ORDERS);
+      setIsDemo(true);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -155,21 +192,96 @@ export function OrdersClient() {
         /* backend offline */
       });
 
-    adminApi
-      .orders()
-      .then((liveOrders) => {
-        if (cancelled) return;
-        setOrders(liveOrders.map((order) => fromQueueOrder(order)));
-        setIsDemo(false);
-      })
-      .catch(() => {
-        if (!cancelled) setIsDemo(true);
-      });
+    void loadOrders();
 
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, [router, loadOrders]);
+
+  useEffect(() => {
+    if (!selected) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selected]);
+
+  // The queue payload has no status history — load the full order on open.
+  const openOrder = async (order: AdminOrder) => {
+    setSelected(order);
+    setNewStatus(order.status);
+    setNotice(null);
+    if (isDemo) return;
+    try {
+      const detail = await adminApi.orderDetail(order.id);
+      setSelected((cur) => (cur?.id === order.id ? { ...cur, ...detail } : cur));
+    } catch {
+      /* keep the queue row */
+    }
+  };
+
+  const applyQueueUpdate = async (q: QueueOrder) => {
+    const fresh = fromQueueOrder(q);
+    setOrders((prev) =>
+      prev.map((o) => (o.id === q.id ? { ...o, ...fresh, statusHistory: o.statusHistory } : o)),
+    );
+    try {
+      const detail = await adminApi.orderDetail(q.id);
+      setSelected((cur) => (cur?.id === q.id ? { ...cur, ...detail } : cur));
+    } catch {
+      setSelected((cur) =>
+        cur?.id === q.id ? { ...cur, ...fresh, statusHistory: cur.statusHistory } : cur,
+      );
+    }
+  };
+
+  const handlePushToQikink = async () => {
+    if (!selected) return;
+    setQikinkBusy("push");
+    setNotice(null);
+    try {
+      const updated = await adminApi.pushOrderToQikink(selected.id);
+      await applyQueueUpdate(updated);
+      setNotice(
+        updated.qikinkOrderId
+          ? { tone: "info", text: `Pushed to Qikink as ${updated.qikinkOrderId}.` }
+          : { tone: "error", text: updated.qikinkError || "Qikink did not accept the order." },
+      );
+    } catch (err) {
+      setNotice({ tone: "error", text: errorMessage(err) });
+    } finally {
+      setQikinkBusy(null);
+    }
+  };
+
+  const handleSyncFromQikink = async () => {
+    if (!selected) return;
+    setQikinkBusy("sync");
+    setNotice(null);
+    try {
+      const updated = await adminApi.syncOrderFromQikink(selected.id);
+      await applyQueueUpdate(updated);
+      setNotice({ tone: "info", text: `Qikink status: ${updated.qikinkStatus || "unknown"}.` });
+    } catch (err) {
+      setNotice({ tone: "error", text: errorMessage(err) });
+    } finally {
+      setQikinkBusy(null);
+    }
+  };
+
+  const handleSyncAll = async () => {
+    setQikinkBusy("all");
+    try {
+      await qikinkApi.syncOrders();
+      await loadOrders();
+    } catch {
+      /* queue keeps its last state */
+    } finally {
+      setQikinkBusy(null);
+    }
+  };
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -187,17 +299,25 @@ export function OrdersClient() {
     if (!selected) return;
     setUpdatingId(selected.id);
     try {
-      await adminApi.updateOrderStatus(selected.id, { status: newStatus, note: statusNote });
+      const result = await adminApi.updateOrderStatus(selected.id, {
+        status: newStatus,
+        note: statusNote,
+      });
       const updated: AdminOrder = {
         ...selected,
         status: newStatus,
         statusHistory: [
           ...selected.statusHistory,
-          { status: newStatus, note: statusNote, createdAt: new Date().toISOString() },
+          {
+            status: newStatus,
+            note: result.warning || statusNote,
+            createdAt: new Date().toISOString(),
+          },
         ],
       };
       setOrders((prev) => prev.map((o) => (o.id === selected.id ? updated : o)));
       setSelected(updated);
+      if (result.warning) setNotice({ tone: "error", text: result.warning });
     } catch {
       // Graceful degradation — update local state only
       const updated: AdminOrder = {
@@ -244,8 +364,37 @@ export function OrdersClient() {
               </span>
             )}
           </div>
-          <h2 className="text-4xl font-bold">Orders Queue</h2>
+          <div className="flex items-end justify-between gap-4">
+            <h2 className="text-4xl font-bold">Orders Queue</h2>
+            <div className="flex gap-3">
+              <button
+                onClick={handleSyncAll}
+                disabled={isDemo || qikinkBusy === "all"}
+                className="technical-border px-3 py-1.5 font-mono text-[11px] flex items-center gap-2 hover:border-foreground transition-all disabled:opacity-40"
+              >
+                <RefreshCw className={`h-3 w-3 ${qikinkBusy === "all" ? "animate-spin" : ""}`} />
+                {qikinkBusy === "all" ? "SYNCING..." : "SYNC_QIKINK"}
+              </button>
+              <button
+                onClick={() => setShowNewOrder(true)}
+                disabled={isDemo}
+                className="bg-foreground text-background px-3 py-1.5 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40"
+              >
+                <Plus className="h-3 w-3" /> NEW ORDER
+              </button>
+            </div>
+          </div>
         </header>
+
+        {showNewOrder && (
+          <NewOrderPanel
+            onClose={() => setShowNewOrder(false)}
+            onCreated={(order) => {
+              setOrders((prev) => [fromQueueOrder(order), ...prev]);
+              setShowNewOrder(false);
+            }}
+          />
+        )}
 
         {/* Filter bar */}
         <div className="flex gap-2 mb-6 flex-wrap">
@@ -292,7 +441,12 @@ export function OrdersClient() {
                     key={order.id}
                     className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
                   >
-                    <td className="p-4 font-mono text-xs text-primary">{order.reference}</td>
+                    <td className="p-4 font-mono text-xs text-primary whitespace-nowrap">
+                      {order.reference}
+                      <span className="block text-[9px] text-muted-foreground">
+                        {PAYMENT_LABEL[order.paymentGateway || "razorpay"] || order.paymentGateway}
+                      </span>
+                    </td>
                     <td className="p-4 text-sm">{order.client}</td>
                     <td className="p-4 font-mono text-sm">{money(order.total, order.currency)}</td>
                     <td className="p-4">
@@ -302,8 +456,18 @@ export function OrdersClient() {
                         {order.status.toUpperCase()}
                       </span>
                     </td>
-                    <td className="p-4 font-mono text-[10px] text-muted-foreground">
-                      {order.qikinkError || order.qikinkStatus || "—"}
+                    <td
+                      className={`p-4 font-mono text-[10px] ${needsQikinkPush(order) ? "text-destructive" : "text-muted-foreground"}`}
+                    >
+                      {needsQikinkPush(order) && <span className="block">NOT_ON_QIKINK</span>}
+                      <span
+                        className="block max-w-xs line-clamp-2"
+                        title={order.qikinkError || order.qikinkStatus || ""}
+                      >
+                        {order.qikinkError ||
+                          order.qikinkStatus ||
+                          (needsQikinkPush(order) ? "Awaiting push" : "—")}
+                      </span>
                       {order.trackingLink && (
                         <a
                           href={order.trackingLink}
@@ -320,10 +484,7 @@ export function OrdersClient() {
                     </td>
                     <td className="p-4">
                       <button
-                        onClick={() => {
-                          setSelected(order);
-                          setNewStatus(order.status);
-                        }}
+                        onClick={() => void openOrder(order)}
                         className="font-mono text-[11px] text-primary hover:underline"
                       >
                         VIEW →
@@ -448,6 +609,11 @@ export function OrdersClient() {
                               </td>
                               <td className="p-2 font-mono text-[10px] text-muted-foreground">
                                 {item.sku}
+                                <span
+                                  className={`block ${item.qikinkSku ? "" : "text-destructive"}`}
+                                >
+                                  QK: {item.qikinkSku || "not mapped"}
+                                </span>
                               </td>
                               <td className="p-2 font-mono text-xs">{item.qty}</td>
                               <td className="p-2 font-mono text-xs">
@@ -471,25 +637,78 @@ export function OrdersClient() {
                   <p className="font-mono text-[11px] text-muted-foreground">
                     {selected.client} · {selected.shippingCity}, {selected.shippingCountry}
                   </p>
-                  {selected.qikinkStatus && (
-                    <p className="font-mono text-[11px] text-muted-foreground mt-2">
-                      Qikink: {selected.qikinkStatus}
-                      {selected.courier ? ` · ${selected.courier}` : ""}
-                      {selected.awb ? ` · AWB ${selected.awb}` : ""}
+                </div>
+
+                {/* Qikink fulfilment */}
+                <div className="p-4 technical-border bg-surface-container space-y-3">
+                  <p className="font-mono text-[11px] uppercase tracking-widest">
+                    Qikink Fulfilment
+                  </p>
+                  <div className="font-mono text-[10px] text-muted-foreground space-y-0.5">
+                    <p>ORDER_ID: {selected.qikinkOrderId || "—"}</p>
+                    <p>STATUS: {selected.qikinkStatus || "—"}</p>
+                    {(selected.courier || selected.awb) && (
+                      <p>
+                        SHIPMENT:{" "}
+                        {[selected.courier, selected.awb && `AWB ${selected.awb}`]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                    <p>ATTEMPTS: {selected.qikinkAttempts ?? 0}</p>
+                    <p>
+                      LAST_SYNC:{" "}
+                      {selected.qikinkSyncedAt
+                        ? new Date(selected.qikinkSyncedAt).toLocaleString()
+                        : "—"}
                     </p>
-                  )}
-                  {selected.qikinkError && (
-                    <p className="font-mono text-[11px] text-destructive mt-2">{selected.qikinkError}</p>
-                  )}
+                  </div>
                   {selected.trackingLink && (
                     <a
                       href={selected.trackingLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-mono text-[11px] text-primary hover:underline mt-2 inline-block"
+                      className="font-mono text-[11px] text-primary hover:underline inline-block"
                     >
-                      Open tracking
+                      OPEN TRACKING →
                     </a>
+                  )}
+                  {selected.qikinkError && !notice && (
+                    <p className="font-mono text-[11px] text-destructive">{selected.qikinkError}</p>
+                  )}
+                  {notice && (
+                    <p
+                      className={`font-mono text-[11px] ${notice.tone === "error" ? "text-destructive" : "text-primary"}`}
+                    >
+                      {notice.text}
+                    </p>
+                  )}
+                  {needsQikinkPush(selected) && (
+                    <button
+                      onClick={handlePushToQikink}
+                      disabled={isDemo || qikinkBusy !== null}
+                      className="w-full bg-primary text-primary-foreground py-2 font-mono text-[11px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
+                    >
+                      <Send className="h-3 w-3" />
+                      {qikinkBusy === "push" ? "PUSHING..." : "PUSH_TO_QIKINK"}
+                    </button>
+                  )}
+                  {selected.qikinkOrderId && (
+                    <button
+                      onClick={handleSyncFromQikink}
+                      disabled={isDemo || qikinkBusy !== null}
+                      className="w-full technical-border py-2 font-mono text-[11px] flex items-center justify-center gap-2 hover:border-foreground transition-all disabled:opacity-50"
+                    >
+                      <RefreshCw
+                        className={`h-3 w-3 ${qikinkBusy === "sync" ? "animate-spin" : ""}`}
+                      />
+                      {qikinkBusy === "sync" ? "SYNCING..." : "SYNC_STATUS"}
+                    </button>
+                  )}
+                  {!needsQikinkPush(selected) && !selected.qikinkOrderId && (
+                    <p className="font-mono text-[10px] text-muted-foreground">
+                      Pushed automatically once the order is paid.
+                    </p>
                   )}
                 </div>
 
@@ -509,6 +728,12 @@ export function OrdersClient() {
                       ),
                     )}
                   </select>
+                  {newStatus === "cancelled" && selected.qikinkOrderId && (
+                    <p className="font-mono text-[10px] text-destructive">
+                      Qikink has no cancel API — also cancel order {selected.qikinkOrderId} in the
+                      Qikink dashboard.
+                    </p>
+                  )}
                   <input
                     value={statusNote}
                     onChange={(e) => setStatusNote(e.target.value)}

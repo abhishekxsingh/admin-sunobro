@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin-sidebar";
-import { adminAuthApi } from "@/lib/api/endpoints";
-import type { AdminUser } from "@/lib/api/types";
+import { ApiError } from "@/lib/api/client";
+import { adminAuthApi, qikinkApi } from "@/lib/api/endpoints";
+import type { AdminUser, QikinkStatus } from "@/lib/api/types";
 
 export function SettingsClient() {
   const router = useRouter();
@@ -12,6 +13,41 @@ export function SettingsClient() {
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [storeName, setStoreName] = useState("SunoBro");
   const [currency, setCurrency] = useState("INR");
+  const [qikink, setQikink] = useState<QikinkStatus | null>(null);
+  const [qikinkBusy, setQikinkBusy] = useState<"status" | "products" | "orders" | null>("status");
+  const [qikinkLog, setQikinkLog] = useState<string | null>(null);
+
+  const refreshQikink = async () => {
+    setQikinkBusy("status");
+    try {
+      setQikink(await qikinkApi.status());
+    } catch (err) {
+      setQikink({
+        connected: false,
+        message: err instanceof ApiError ? err.message : "Could not reach the backend.",
+      });
+    } finally {
+      setQikinkBusy(null);
+    }
+  };
+
+  const runQikinkSync = async (kind: "products" | "orders") => {
+    setQikinkBusy(kind);
+    setQikinkLog(null);
+    try {
+      const result =
+        kind === "products" ? await qikinkApi.syncProducts() : await qikinkApi.syncOrders();
+      setQikinkLog(result.message);
+    } catch (err) {
+      setQikinkLog(err instanceof ApiError ? err.message : "Sync failed.");
+    } finally {
+      setQikinkBusy(null);
+    }
+  };
+
+  useEffect(() => {
+    void refreshQikink();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -115,60 +151,65 @@ export function SettingsClient() {
                   Qikink Integration
                 </p>
                 <p className="font-mono text-[10px] text-muted-foreground">
-                  Print-on-demand fulfillment
+                  Print-on-demand fulfillment — paid orders push automatically
                 </p>
               </div>
-              <span className="font-mono text-[10px] px-2 py-0.5 border bg-tertiary/10 text-tertiary border-tertiary/20">
-                NOT CONFIGURED
+              <span
+                className={`font-mono text-[10px] px-2 py-0.5 border ${
+                  qikink?.connected
+                    ? "bg-secondary/10 text-secondary border-secondary/20"
+                    : "bg-tertiary/10 text-tertiary border-tertiary/20"
+                }`}
+              >
+                {qikinkBusy === "status"
+                  ? "CHECKING..."
+                  : qikink?.connected
+                    ? `CONNECTED${qikink.env ? ` · ${qikink.env.toUpperCase()}` : ""}`
+                    : "OFFLINE"}
               </span>
             </div>
 
             <div className="p-4 bg-surface-container technical-border font-mono text-[10px] space-y-1">
-              <p className="text-tertiary">
-                [WARN] QIKINK_NOT_WIRED — configure credentials in .env
+              {qikink && (
+                <p className={qikink.connected ? "text-secondary" : "text-tertiary"}>
+                  [{qikink.connected ? "OK" : "WARN"}] {qikink.message}
+                </p>
+              )}
+              <p className="text-muted-foreground">
+                [INFO] Status &amp; tracking refresh every 15 min and on order views
               </p>
               <p className="text-muted-foreground">
-                [TODO] QIKINK_CLIENT_ID=&lt;your-client-id&gt;
+                [INFO] Failed pushes auto-retry up to 3x within 24h, then need PUSH_TO_QIKINK
               </p>
               <p className="text-muted-foreground">
-                [TODO] QIKINK_CLIENT_SECRET=&lt;your-secret&gt;
+                [INFO] Qikink has no cancel API — cancel pushed orders in dashboard.qikink.com
               </p>
-              <p className="text-muted-foreground">
-                [SEE] server/services/admin/qikink.js for setup instructions
-              </p>
+              {qikinkLog && <p className="text-primary break-words">[SYNC] {qikinkLog}</p>}
             </div>
 
-            <div className="space-y-3">
-              <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                  Client ID
-                </label>
-                <input
-                  type="password"
-                  disabled
-                  placeholder="Not configured"
-                  className="w-full bg-muted px-3 py-2 text-sm technical-border opacity-50 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                  Client Secret
-                </label>
-                <input
-                  type="password"
-                  disabled
-                  placeholder="Not configured"
-                  className="w-full bg-muted px-3 py-2 text-sm technical-border opacity-50 cursor-not-allowed"
-                />
-              </div>
+            <div className="grid grid-cols-3 gap-3">
+              <button
+                onClick={refreshQikink}
+                disabled={qikinkBusy !== null}
+                className="technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+              >
+                {qikinkBusy === "status" ? "CHECKING..." : "TEST_CONNECTION"}
+              </button>
+              <button
+                onClick={() => runQikinkSync("products")}
+                disabled={qikinkBusy !== null || !qikink?.connected}
+                className="technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+              >
+                {qikinkBusy === "products" ? "CHECKING..." : "CHECK_SKUS"}
+              </button>
+              <button
+                onClick={() => runQikinkSync("orders")}
+                disabled={qikinkBusy !== null || !qikink?.connected}
+                className="technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+              >
+                {qikinkBusy === "orders" ? "SYNCING..." : "SYNC_ORDERS"}
+              </button>
             </div>
-
-            <button
-              disabled
-              className="w-full bg-tertiary/10 text-tertiary border border-tertiary/20 py-2 font-mono text-[11px] cursor-not-allowed opacity-60"
-            >
-              CONNECT QIKINK — COMING_SOON
-            </button>
           </section>
 
           {/* Danger Zone */}
