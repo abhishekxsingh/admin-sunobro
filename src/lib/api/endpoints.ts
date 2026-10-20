@@ -11,8 +11,10 @@ import type {
   InventoryItem,
   QikinkStatus,
   QikinkSyncResult,
+  QikinkExportResult,
   QueueOrder,
   SheetImportResult,
+  VariationsResult,
 } from "./types";
 
 export const adminAuthApi = {
@@ -63,6 +65,12 @@ export const adminProductsApi = {
   syncQikink: (id: string) => api.post<QikinkSyncResult>(`/admin/products/${id}/sync-qikink`),
   setAvailability: (id: string, payload: { color: string; size?: string; enabled: boolean }) =>
     api.put<AdminProduct>(`/admin/products/${id}/availability`, payload),
+  importQikinkExport: (payload: { file: string; dryRun: boolean }) =>
+    api.post<QikinkExportResult>("/admin/products/qikink-export", payload),
+  saveVariations: (
+    id: string,
+    payload: { text: string; images: Record<string, string>; dryRun: boolean },
+  ) => api.post<VariationsResult>(`/admin/products/${id}/qikink-variations`, payload),
   importSheet: (payload: { file: string; dryRun: boolean }) =>
     api.post<SheetImportResult>("/admin/products/import", payload),
 };
