@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, ImageOff, Plus, Trash2, Upload, Wand2 } from "lucide-react";
+import { Download, FileSpreadsheet, ImageOff, Plus, Trash2, Wand2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
-import { CATALOG_CSV_TEMPLATE, parseCatalogCsv } from "@/lib/csv";
 import type { AdminProduct, AdminUser } from "@/lib/api/types";
+import { SheetImportPanel } from "./SheetImportPanel";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
   {
@@ -67,6 +67,7 @@ type VariantRow = {
   qikinkSku: string;
   price: string;
   stock: string;
+  image: string;
 };
 
 const EMPTY_FORM: ProductForm = {
@@ -145,8 +146,8 @@ export function ProductsClient() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [uploadingCsv, setUploadingCsv] = useState(false);
-  const [csvStatus, setCsvStatus] = useState<{ message: string; error?: boolean } | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [notice, setNotice] = useState<{ message: string; error?: boolean } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -238,6 +239,7 @@ export function ProductsClient() {
         qikinkSku: v.qikinkSku || "",
         price: v.price != null ? String(v.price) : "",
         stock: String(v.stock ?? 0),
+        image: v.image || "",
       }));
       setVariants(rows);
       setGridSizes([...new Set(rows.map((r) => r.size))].join(", "));
@@ -263,6 +265,7 @@ export function ProductsClient() {
               qikinkSku: "",
               price: "",
               stock: "0",
+              image: "",
             },
         ),
       ),
@@ -325,6 +328,7 @@ export function ProductsClient() {
         qikinkSku: v.qikinkSku.trim() || undefined,
         price: v.price.trim() ? parseFloat(v.price) : undefined,
         stock: form.trackInventory ? parseInt(v.stock, 10) || 0 : undefined,
+        image: v.image.trim(),
       })),
     };
 
@@ -351,55 +355,17 @@ export function ProductsClient() {
       await adminProductsApi.remove(product.id);
       setProducts((prev) => prev.filter((p) => p.id !== product.id));
     } catch (err) {
-      setCsvStatus({ message: errorMessage(err, "Delete failed."), error: true });
+      setNotice({ message: errorMessage(err, "Delete failed."), error: true });
     } finally {
       setDeletingId(null);
     }
   };
 
-  const downloadTemplate = () => {
-    const url = URL.createObjectURL(new Blob([CATALOG_CSV_TEMPLATE], { type: "text/csv" }));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "sunobro-catalog-template.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const handleCsvUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-    setUploadingCsv(true);
-    setCsvStatus(null);
+  const reloadProducts = async () => {
     try {
-      const { products: parsed, problems } = parseCatalogCsv(await file.text());
-      if (parsed.length === 0) {
-        setCsvStatus({
-          message: problems[0] || "No products found — download the template for the format.",
-          error: true,
-        });
-        return;
-      }
-      const { created, errors } = await adminProductsApi.bulkCreate(parsed);
-      setProducts((prev) => [...created, ...prev]);
-      const failed = errors.map((f) => `${f.name}: ${f.errors.map((x) => x.message).join("; ")}`);
-      const drafts = created.filter((p) => p.status === "draft").length;
-      setCsvStatus({
-        message: [
-          `Imported ${created.length} product${created.length === 1 ? "" : "s"}.`,
-          drafts ? `${drafts} saved as DRAFT (unmapped variants).` : "",
-          ...problems,
-          ...failed,
-        ]
-          .filter(Boolean)
-          .join(" "),
-        error: failed.length > 0 || problems.length > 0,
-      });
+      setProducts(await adminProductsApi.list({ page: 1, limit: 100 }));
     } catch (err) {
-      setCsvStatus({ message: errorMessage(err, "Could not import that CSV file."), error: true });
-    } finally {
-      setUploadingCsv(false);
+      setNotice({ message: errorMessage(err, "Could not reload products."), error: true });
     }
   };
 
@@ -434,23 +400,19 @@ export function ProductsClient() {
               </p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={downloadTemplate}
+              <a
+                href="/SunoBro-Product-Sheet.xlsx"
+                download
                 className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
               >
-                <Download className="h-3.5 w-3.5" /> CSV TEMPLATE
+                <Download className="h-3.5 w-3.5" /> PRODUCT SHEET
+              </a>
+              <button
+                onClick={() => setShowImport(true)}
+                className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
+              >
+                <FileSpreadsheet className="h-3.5 w-3.5" /> IMPORT SHEET
               </button>
-              <label className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
-                <Upload className="h-3.5 w-3.5" />
-                {uploadingCsv ? "UPLOADING..." : "UPLOAD CSV"}
-                <input
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={handleCsvUpload}
-                  disabled={uploadingCsv}
-                />
-              </label>
               <button
                 onClick={openCreate}
                 className="bg-foreground text-background px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
@@ -465,11 +427,17 @@ export function ProductsClient() {
         <section className="mb-8 p-4 technical-border bg-surface-container font-mono text-[10px] text-muted-foreground grid md:grid-cols-4 gap-4">
           {[
             ["01 · DESIGN", "Create the product in dashboard.qikink.com → My Products."],
-            ["02 · COPY SKUS", "Each size × colour there has its own SKU (e.g. MVnHs-Wh-M)."],
-            ["03 · MAP", "Add the product here and paste each SKU onto its variant row."],
             [
-              "04 · PUBLISH",
-              "ACTIVE unlocks once every variant is mapped. Paid orders push by SKU.",
+              "02 · FILL THE SHEET",
+              "One row per colour × size with its Store SKU (v-…) from Product Variations — not the Product SKU.",
+            ],
+            [
+              "03 · IMPORT",
+              "IMPORT SHEET → check the preview → APPLY. Re-upload any time to update.",
+            ],
+            [
+              "04 · LIVE",
+              "Products set to active go live once every variant has a Store SKU. Paid orders push to Qikink.",
             ],
           ].map(([title, body]) => (
             <div key={title}>
@@ -487,12 +455,16 @@ export function ProductsClient() {
           </div>
         )}
 
-        {csvStatus && (
+        {notice && (
           <p
-            className={`mb-4 font-mono text-[11px] ${csvStatus.error ? "text-destructive" : "text-secondary"}`}
+            className={`mb-4 font-mono text-[11px] ${notice.error ? "text-destructive" : "text-secondary"}`}
           >
-            {csvStatus.message}
+            {notice.message}
           </p>
+        )}
+
+        {showImport && (
+          <SheetImportPanel onClose={() => setShowImport(false)} onApplied={reloadProducts} />
         )}
 
         {/* Create / Edit form */}
@@ -657,7 +629,8 @@ export function ProductsClient() {
                       {[
                         "Size",
                         "Colour",
-                        "Qikink SKU (from My Products)",
+                        "Qikink Store SKU (v-…)",
+                        "Colour image URL",
                         "Price override",
                         ...(form.trackInventory ? ["Stock"] : []),
                         "Our SKU",
@@ -673,7 +646,7 @@ export function ProductsClient() {
                     {variants.length === 0 ? (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="p-6 text-center font-mono text-[11px] text-muted-foreground"
                         >
                           ENTER SIZES + COLOURS, THEN BUILD GRID
@@ -694,7 +667,7 @@ export function ProductsClient() {
                               <input
                                 value={row.qikinkSku}
                                 onChange={(e) => updateRow(i, { qikinkSku: e.target.value })}
-                                placeholder="paste Qikink SKU"
+                                placeholder="paste Store SKU (v-…)"
                                 className={`w-full bg-muted px-2 py-1 font-mono text-xs technical-border ${
                                   duplicate || missing ? "border-destructive/60" : ""
                                 }`}
@@ -704,6 +677,14 @@ export function ProductsClient() {
                                   USED BY ANOTHER VARIANT
                                 </p>
                               )}
+                            </td>
+                            <td className="p-2">
+                              <input
+                                value={row.image}
+                                onChange={(e) => updateRow(i, { image: e.target.value })}
+                                placeholder="mockup link for this colour"
+                                className="w-full min-w-40 bg-muted px-2 py-1 font-mono text-xs technical-border"
+                              />
                             </td>
                             <td className="p-2 w-28">
                               <input
@@ -824,7 +805,7 @@ export function ProductsClient() {
                     colSpan={7}
                     className="p-8 text-center font-mono text-xs text-muted-foreground"
                   >
-                    NO PRODUCTS YET — ADD ONE OR UPLOAD A CSV
+                    NO PRODUCTS YET — ADD ONE OR IMPORT THE PRODUCT SHEET
                   </td>
                 </tr>
               ) : (
