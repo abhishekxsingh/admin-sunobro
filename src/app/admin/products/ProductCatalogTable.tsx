@@ -6,6 +6,7 @@ import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, ProductVariant } from "@/lib/api/types";
 import { VariationsPanel } from "./VariationsPanel";
+import { AddColourCard, AddSizeInline, ColourImageEditor } from "./ColourEditors";
 
 type Status = AdminProduct["status"];
 type Filter = "all" | Status;
@@ -87,6 +88,12 @@ function ProductOptions({
   const [variants, setVariants] = useState<ProductVariant[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editingImage, setEditingImage] = useState<string | null>(null);
+
+  const applyUpdate = (updated: AdminProduct) => {
+    setVariants(updated.variants || []);
+    onUpdated(updated);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -115,8 +122,7 @@ function ProductOptions({
     setError(null);
     try {
       const updated = await adminProductsApi.setAvailability(product.id, { color, size, enabled });
-      setVariants(updated.variants || []);
-      onUpdated(updated);
+      applyUpdate(updated);
     } catch (err) {
       setError(errorText(err, "Could not change that option."));
     } finally {
@@ -135,8 +141,9 @@ function ProductOptions({
   return (
     <div className="space-y-3">
       <p className="font-mono text-[10px] text-muted-foreground">
-        Switched-off colours or sizes disappear from the website and can&apos;t be ordered. They
-        stay off when you re-import the sheet.
+        {colours.length === 0
+          ? "No colours yet — add each colour with its sizes and Store SKUs below."
+          : "Click a size to switch it off or on, the image to change it, + SIZE to add one. Switched-off options disappear from the website."}
       </p>
       {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -149,7 +156,14 @@ function ProductOptions({
               className={`p-3 technical-border bg-surface-container space-y-3 ${anyOn ? "" : "opacity-60"}`}
             >
               <div className="flex items-center gap-3">
-                <Thumb src={image} alt={`${product.name} in ${color}`} size="h-12 w-12" />
+                <button
+                  type="button"
+                  onClick={() => setEditingImage(editingImage === color ? null : color)}
+                  title={`Change the ${color} image`}
+                  className="shrink-0 hover:opacity-80"
+                >
+                  <Thumb src={image} alt={`${product.name} in ${color}`} size="h-12 w-12" />
+                </button>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{color}</p>
                   <p className="font-mono text-[10px] text-muted-foreground">
@@ -163,6 +177,15 @@ function ProductOptions({
                   onChange={(next) => void toggle(color, undefined, next)}
                 />
               </div>
+              {editingImage === color && (
+                <ColourImageEditor
+                  product={product}
+                  colour={color}
+                  current={rows.find((v) => v.image)?.image || ""}
+                  onSaved={applyUpdate}
+                  onClose={() => setEditingImage(null)}
+                />
+              )}
               <div className="flex flex-wrap gap-2">
                 {rows.map((v) => {
                   const on = v.enabled !== false;
@@ -184,10 +207,21 @@ function ProductOptions({
                     </button>
                   );
                 })}
+                <AddSizeInline
+                  product={product}
+                  colour={color}
+                  existingSizes={rows.map((v) => v.size)}
+                  onAdded={applyUpdate}
+                />
               </div>
             </div>
           );
         })}
+        <AddColourCard
+          product={product}
+          existingColours={colours.map(([c]) => c)}
+          onAdded={applyUpdate}
+        />
       </div>
     </div>
   );

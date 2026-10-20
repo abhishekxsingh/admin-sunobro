@@ -63,6 +63,16 @@ export const adminProductsApi = {
       products,
     }),
   syncQikink: (id: string) => api.post<QikinkSyncResult>(`/admin/products/${id}/sync-qikink`),
+  addVariants: (
+    id: string,
+    payload: {
+      color: string;
+      image?: string;
+      sizes: { size: string; qikinkSku?: string; price?: number }[];
+    },
+  ) => api.post<AdminProduct>(`/admin/products/${id}/variants`, payload),
+  setColourImage: (id: string, payload: { color: string; image: string }) =>
+    api.put<AdminProduct>(`/admin/products/${id}/colour-image`, payload),
   setAvailability: (id: string, payload: { color: string; size?: string; enabled: boolean }) =>
     api.put<AdminProduct>(`/admin/products/${id}/availability`, payload),
   importQikinkExport: (payload: { file: string; dryRun: boolean }) =>
