@@ -5,6 +5,7 @@ import { ChevronDown, ChevronRight, ImageOff, Pencil } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, ProductVariant } from "@/lib/api/types";
+import { VariationsPanel } from "./VariationsPanel";
 
 type Status = AdminProduct["status"];
 type Filter = "all" | Status;
@@ -210,6 +211,7 @@ export function ProductCatalogTable({
   const [renaming, setRenaming] = useState<{ id: string; value: string } | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [rowError, setRowError] = useState<{ id: string; message: string } | null>(null);
+  const [variationsFor, setVariationsFor] = useState<string | null>(null);
 
   const counts = useMemo(
     () => ({
@@ -367,18 +369,38 @@ export function ProductCatalogTable({
                         {money(product.price, product.currency)}
                       </td>
                       <td className="p-4 font-mono text-[11px] text-muted-foreground">
-                        {enabled}/{product.variantCount} on
+                        {product.variantCount === 0 ? (
+                          <span className="text-tertiary">
+                            0/{product.qikink?.expectedVariants ?? "?"} · add variations
+                          </span>
+                        ) : (
+                          <>
+                            {enabled}/{product.variantCount} on
+                            {product.qikink?.expectedVariants &&
+                            product.qikink.expectedVariants !== product.variantCount ? (
+                              <span className="block text-tertiary">
+                                Qikink has {product.qikink.expectedVariants}
+                              </span>
+                            ) : null}
+                          </>
+                        )}
                       </td>
                       <td className="p-4">
-                        <span
-                          className={`font-mono text-[10px] px-2 py-0.5 border ${
-                            mappedOk
-                              ? "bg-secondary/10 text-secondary border-secondary/20"
-                              : "bg-destructive/10 text-destructive border-destructive/20"
-                          }`}
-                        >
-                          {mappedOk ? "MAPPED" : "UNMAPPED"} {product.mappedCount}/{enabled}
-                        </span>
+                        {product.variantCount === 0 ? (
+                          <span className="font-mono text-[10px] px-2 py-0.5 border border-border/40 text-muted-foreground">
+                            NO VARIANTS
+                          </span>
+                        ) : (
+                          <span
+                            className={`font-mono text-[10px] px-2 py-0.5 border ${
+                              mappedOk
+                                ? "bg-secondary/10 text-secondary border-secondary/20"
+                                : "bg-destructive/10 text-destructive border-destructive/20"
+                            }`}
+                          >
+                            {mappedOk ? "MAPPED" : "UNMAPPED"} {product.mappedCount}/{enabled}
+                          </span>
+                        )}
                       </td>
                       <td className="p-4">
                         <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
@@ -400,6 +422,18 @@ export function ProductCatalogTable({
                             </button>
                           )}
                           <button
+                            onClick={() =>
+                              setVariationsFor(variationsFor === product.id ? null : product.id)
+                            }
+                            className={`font-mono text-[11px] hover:underline ${
+                              product.variantCount === 0
+                                ? "font-bold text-tertiary"
+                                : "text-primary"
+                            }`}
+                          >
+                            {product.variantCount === 0 ? "ADD VARIATIONS" : "VARIATIONS"}
+                          </button>
+                          <button
                             onClick={() => onEdit(product)}
                             className="font-mono text-[11px] text-primary hover:underline"
                           >
@@ -420,6 +454,18 @@ export function ProductCatalogTable({
                         )}
                       </td>
                     </tr>
+                    {variationsFor === product.id && (
+                      <tr className="border-b border-border/30 bg-muted/20">
+                        <td />
+                        <td colSpan={6} className="p-4">
+                          <VariationsPanel
+                            product={product}
+                            onSaved={onProductChange}
+                            onClose={() => setVariationsFor(null)}
+                          />
+                        </td>
+                      </tr>
+                    )}
                     {open && (
                       <tr className="border-b border-border/30 bg-muted/20">
                         <td />

@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, Plus, Trash2, Wand2 } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, Trash2, Upload, Wand2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, AdminUser } from "@/lib/api/types";
 import { SheetImportPanel } from "./SheetImportPanel";
+import { QikinkExportPanel } from "./QikinkExportPanel";
 import { ProductCatalogTable } from "./ProductCatalogTable";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
@@ -126,6 +127,7 @@ export function ProductsClient() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [showQikinkExport, setShowQikinkExport] = useState(false);
   const [notice, setNotice] = useState<{ message: string; error?: boolean } | null>(null);
 
   useEffect(() => {
@@ -389,6 +391,12 @@ export function ProductsClient() {
                 <Download className="h-3.5 w-3.5" /> PRODUCT SHEET
               </a>
               <button
+                onClick={() => setShowQikinkExport(true)}
+                className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
+              >
+                <Upload className="h-3.5 w-3.5" /> QIKINK EXPORT
+              </button>
+              <button
                 onClick={() => setShowImport(true)}
                 className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
               >
@@ -407,18 +415,21 @@ export function ProductsClient() {
         {/* How listing ↔ Qikink works */}
         <section className="mb-8 p-4 technical-border bg-surface-container font-mono text-[10px] text-muted-foreground grid md:grid-cols-4 gap-4">
           {[
-            ["01 · DESIGN", "Create the product in dashboard.qikink.com → My Products."],
             [
-              "02 · FILL THE SHEET",
-              "One row per colour × size with its Store SKU (v-…) from Product Variations — not the Product SKU.",
+              "01 · QIKINK EXPORT",
+              "Design in Qikink → My Products → Export. Upload it with QIKINK EXPORT: every product arrives IN REVIEW.",
             ],
             [
-              "03 · IMPORT",
-              "IMPORT SHEET → check the preview → APPLY. Re-upload any time to update.",
+              "02 · ADD VARIATIONS",
+              "On each product: paste its Product Variations table from Qikink and one image link per colour.",
             ],
             [
-              "04 · LIVE",
-              "Products set to active go live once every variant has a Store SKU. Paid orders push to Qikink.",
+              "03 · REVIEW",
+              "Rename if needed, switch off colours you don't want, check the colours and sizes.",
+            ],
+            [
+              "04 · PUBLISH",
+              "PUBLISH puts it on the website. Paid orders push to Qikink by Store SKU. (Excel: PRODUCT SHEET / IMPORT SHEET.)",
             ],
           ].map(([title, body]) => (
             <div key={title}>
@@ -442,6 +453,13 @@ export function ProductsClient() {
           >
             {notice.message}
           </p>
+        )}
+
+        {showQikinkExport && (
+          <QikinkExportPanel
+            onClose={() => setShowQikinkExport(false)}
+            onApplied={reloadProducts}
+          />
         )}
 
         {showImport && (

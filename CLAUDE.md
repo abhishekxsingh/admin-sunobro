@@ -25,6 +25,8 @@ src/
 │   │   ├── products/    ProductsClient.tsx        product form (size × colour grid: Store SKU + colour image per row; status review/draft/active); PRODUCT SHEET download + IMPORT SHEET
 │   │   │                ProductCatalogTable.tsx   ALL / IN REVIEW / LIVE / DRAFT tabs, click-to-rename, PUBLISH/UNPUBLISH, expand → colours (image + on/off switch) → size chips (on/off)
 │   │   │                SheetImportPanel.tsx      upload .xlsx → server preview (dryRun) → APPLY IMPORT
+│   │   │                QikinkExportPanel.tsx     step 1: upload Qikink My Products CSV → preview → products in review
+│   │   │                VariationsPanel.tsx       step 2 (per product): paste Product Variations table + image link per colour → READ TABLE → SAVE
 │   │   ├── inventory/   InventoryClient.tsx       per-variant stock (CRITICAL ≤5 / LOW ≤20 / OPTIMAL)
 │   │   ├── settings/    SettingsClient.tsx        store settings (display only); live Qikink status, CHECK_SKUS, SYNC_ORDERS
 │   │   ├── profile/     ProfileClient.tsx         identity from /admin/auth/me, edit + password change

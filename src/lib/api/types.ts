@@ -82,6 +82,15 @@ export type AdminProduct = {
   totalStock: number;
   qikinkSynced: boolean;
   variants?: ProductVariant[];
+  /** Details from the Qikink My Products export (step 1). */
+  qikink?: {
+    productId: string | null;
+    design: string | null;
+    printSize: string | null;
+    colourCount: number | null;
+    sizeRange: string | null;
+    expectedVariants: number | null;
+  };
   createdAt: string;
   updatedAt: string;
 };
@@ -99,6 +108,45 @@ export type ProductVariant = {
   image?: string | null;
   /** false = switched off by an admin: hidden from the website. */
   enabled?: boolean;
+  /** What Qikink charges for this variant (₹). */
+  qikinkCost?: number | null;
+};
+
+export type QikinkExportResult = {
+  applied: boolean;
+  problems: { where: string; message: string }[];
+  products: {
+    productId: string;
+    name: string;
+    design: string;
+    printSize?: string;
+    colourCount?: number;
+    sizeRange?: string;
+    expectedVariants?: number;
+    price: number;
+    cost: string;
+    action: "create" | "update";
+    status: "review" | "active" | "draft";
+    variants: number;
+  }[];
+  results?: { name: string; ok: boolean; id: string; action: "create" | "update" }[];
+};
+
+export type VariationsResult = {
+  applied: boolean;
+  problems: { where: string; message: string }[];
+  warnings: string[];
+  product: { id: string; name: string; price: number };
+  variants: number;
+  expected: number | null;
+  colours: {
+    colour: string;
+    sizes: string[];
+    image: string;
+    cost: number | null;
+    mapped: number;
+  }[];
+  doc?: AdminProduct;
 };
 
 export type SheetImportResult = {
