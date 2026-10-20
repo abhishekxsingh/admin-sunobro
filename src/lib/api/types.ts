@@ -92,6 +92,27 @@ export type ProductVariant = {
   stock: number;
   price: number | null;
   qikinkSku: string | null;
+  /** Mockup for this variant's colour (shown on the product page). */
+  image?: string | null;
+};
+
+export type SheetImportResult = {
+  applied: boolean;
+  problems: { where: string; message: string }[];
+  products: {
+    name: string;
+    status: "active" | "draft";
+    price: number;
+    variants: number;
+    mapped: number;
+    colours: string[];
+    sizes: string[];
+    action: "create" | "update";
+    added: number;
+    removed: number;
+    kept: number;
+  }[];
+  results?: { name: string; ok: boolean; id?: string; slug?: string; errors?: string[] }[];
 };
 
 export type OrderLineItem = {

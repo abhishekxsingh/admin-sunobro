@@ -12,6 +12,7 @@ import type {
   QikinkStatus,
   QikinkSyncResult,
   QueueOrder,
+  SheetImportResult,
 } from "./types";
 
 export const adminAuthApi = {
@@ -60,6 +61,8 @@ export const adminProductsApi = {
       products,
     }),
   syncQikink: (id: string) => api.post<QikinkSyncResult>(`/admin/products/${id}/sync-qikink`),
+  importSheet: (payload: { file: string; dryRun: boolean }) =>
+    api.post<SheetImportResult>("/admin/products/import", payload),
 };
 
 export const adminProfileApi = {

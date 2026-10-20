@@ -22,7 +22,8 @@ src/
 │   │   ├── page.tsx + AdminDashboardClient.tsx   stats cards + quick-nav
 │   │   ├── orders/      OrdersClient.tsx          order queue + SYNC_QIKINK + NEW ORDER; drawer loads full detail, PUSH_TO_QIKINK / SYNC_STATUS, cancel warning
 │   │   │                NewOrderPanel.tsx         admin-created orders: product/variant picker, shipping, prepaid vs COD, push now
-│   │   ├── products/    ProductsClient.tsx        product CRUD with a size × colour variant grid; one Qikink SKU per row (pattern fill helper), MAPPED x/y badge, ACTIVE locked until fully mapped, trackInventory toggle, catalog CSV template + import
+│   │   ├── products/    ProductsClient.tsx        product CRUD with a size × colour grid (Store SKU + colour image per row), MAPPED x/y badge, ACTIVE locked until fully mapped; PRODUCT SHEET download + IMPORT SHEET
+│   │   │                SheetImportPanel.tsx      upload .xlsx → server preview (dryRun) → APPLY IMPORT
 │   │   ├── inventory/   InventoryClient.tsx       per-variant stock (CRITICAL ≤5 / LOW ≤20 / OPTIMAL)
 │   │   ├── settings/    SettingsClient.tsx        store settings (display only); live Qikink status, CHECK_SKUS, SYNC_ORDERS
 │   │   ├── profile/     ProfileClient.tsx         identity from /admin/auth/me, edit + password change
@@ -34,7 +35,7 @@ src/
 ├── hooks/use-theme.ts           dark/light toggle, localStorage key sb_admin_theme
 ├── middleware.ts                guards /admin/* by sb_admin_session cookie presence
 └── lib/
-    ├── csv.ts                   catalog CSV (one row per variant: product_name, slug, price, images `|`-separated, size, color, qikink_sku, …) → grouped products; CATALOG_CSV_TEMPLATE
+    ├── (public/SunoBro-Product-Sheet.xlsx)  the product sheet template served at /SunoBro-Product-Sheet.xlsx
     └── api/
         ├── client.ts            fetch wrapper, credentials: 'include', never renders raw HTML error bodies
         ├── endpoints.ts         adminAuthApi, adminApi (stats/inventory/orders/orderDetail/updateOrderStatus), adminProductsApi (incl. bulkCreate, syncQikink), adminProfileApi, qikinkApi (status/syncProducts/syncOrders); adminApi also has pushOrderToQikink / syncOrderFromQikink
@@ -43,7 +44,7 @@ src/
 
 ## API base URL
 
-`NEXT_PUBLIC_API_BASE_URL`, **defaulting to the deployed Azure backend** (`https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net`). Set it to `http://localhost:4000` in `.env.local` for local backend work. `next.config.ts` also rewrites `/api/*` → `BACKEND_URL`, but the client calls the backend directly (proxying would drop `Set-Cookie`).
+The browser always calls same-origin `/api/*`; `next.config.ts` proxies it to `BACKEND_URL` (falls back to `NEXT_PUBLIC_API_BASE_URL`, then the Azure backend). This is what makes login work in production: the `sb_admin_session` cookie belongs to the admin's own domain, so `middleware.ts` can see it, and Azure's platform CORS doesn't apply.
 
 ## Auth / middleware
 
@@ -66,7 +67,7 @@ src/
 ## Environment (`.env.local`, template `.env.example`)
 
 ```
-NEXT_PUBLIC_API_BASE_URL=https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net
+BACKEND_URL=https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net
 ADMIN_SESSION_COOKIE=sb_admin_session
 NEXT_PUBLIC_SITE_URL=http://localhost:3002
 ```
