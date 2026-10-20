@@ -61,6 +61,8 @@ export const adminProductsApi = {
       products,
     }),
   syncQikink: (id: string) => api.post<QikinkSyncResult>(`/admin/products/${id}/sync-qikink`),
+  setAvailability: (id: string, payload: { color: string; size?: string; enabled: boolean }) =>
+    api.put<AdminProduct>(`/admin/products/${id}/availability`, payload),
   importSheet: (payload: { file: string; dryRun: boolean }) =>
     api.post<SheetImportResult>("/admin/products/import", payload),
 };
