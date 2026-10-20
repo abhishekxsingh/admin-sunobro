@@ -157,7 +157,7 @@ export function SheetImportPanel({
                     {p.action === "create" ? "NEW" : "UPDATE"}
                   </td>
                   <td className="p-2 font-mono text-[10px]">
-                    {p.status === "active" ? "LIVE" : "DRAFT"}
+                    {p.status === "active" ? "LIVE" : p.status === "review" ? "IN REVIEW" : "DRAFT"}
                   </td>
                   <td className="p-2 font-mono text-xs">₹{p.price.toLocaleString("en-IN")}</td>
                   <td className="p-2 font-mono text-[10px] text-muted-foreground">

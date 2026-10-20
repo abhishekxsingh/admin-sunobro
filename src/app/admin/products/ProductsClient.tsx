@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, ImageOff, Plus, Trash2, Wand2 } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, Trash2, Wand2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, AdminUser } from "@/lib/api/types";
 import { SheetImportPanel } from "./SheetImportPanel";
+import { ProductCatalogTable } from "./ProductCatalogTable";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
   {
@@ -56,7 +57,7 @@ type ProductForm = {
   description: string;
   price: string;
   images: string;
-  status: "active" | "draft";
+  status: "review" | "active" | "draft";
   trackInventory: boolean;
 };
 
@@ -76,7 +77,7 @@ const EMPTY_FORM: ProductForm = {
   description: "",
   price: "",
   images: "",
-  status: "draft",
+  status: "review",
   trackInventory: false,
 };
 
@@ -89,30 +90,8 @@ const splitList = (value: string) =>
     .map((s) => s.trim())
     .filter(Boolean);
 
-const money = (n: number, cur = "INR") =>
-  `${cur === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
-
 const errorMessage = (err: unknown, fallback: string) =>
   err instanceof ApiError || err instanceof Error ? err.message : fallback;
-
-function ProductThumb({ src, alt }: { src: string; alt: string }) {
-  const [errored, setErrored] = useState(!src);
-  if (errored) {
-    return (
-      <div className="w-10 h-10 shrink-0 bg-muted flex items-center justify-center technical-border">
-        <ImageOff className="h-4 w-4 text-muted-foreground" />
-      </div>
-    );
-  }
-  return (
-    <img
-      src={src}
-      alt={alt}
-      onError={() => setErrored(true)}
-      className="w-10 h-10 shrink-0 object-cover technical-border bg-muted"
-    />
-  );
-}
 
 function MappingBadge({ mapped, total }: { mapped: number; total: number }) {
   const complete = total > 0 && mapped === total;
@@ -183,6 +162,7 @@ export function ProductsClient() {
   const fullyMapped = variants.length > 0 && mappedCount === variants.length;
 
   const liveUnmapped = products.filter((p) => p.status === "active" && !p.qikinkSynced);
+  const inReview = products.filter((p) => p.status === "review").length;
 
   const duplicateQikinkSkus = useMemo(() => {
     const counts = new Map<string, number>();
@@ -397,6 +377,7 @@ export function ProductsClient() {
               <p className="font-mono text-[10px] text-muted-foreground mt-1">
                 {products.length} PRODUCT{products.length === 1 ? "" : "S"} ·{" "}
                 {products.filter((p) => p.status === "active").length} LIVE
+                {inReview > 0 ? ` · ${inReview} IN REVIEW` : ""}
               </p>
             </div>
             <div className="flex gap-3">
@@ -738,7 +719,7 @@ export function ProductsClient() {
                   Storefront status
                 </label>
                 <div className="flex gap-2">
-                  {(["draft", "active"] as const).map((s) => (
+                  {(["review", "draft", "active"] as const).map((s) => (
                     <button
                       key={s}
                       type="button"
@@ -750,7 +731,11 @@ export function ProductsClient() {
                           : "text-muted-foreground"
                       }`}
                     >
-                      {s === "active" ? "ACTIVE (LIVE)" : "DRAFT (HIDDEN)"}
+                      {s === "active"
+                        ? "ACTIVE (LIVE)"
+                        : s === "review"
+                          ? "IN REVIEW"
+                          : "DRAFT (HIDDEN)"}
                     </button>
                   ))}
                 </div>
@@ -781,101 +766,16 @@ export function ProductsClient() {
           </form>
         )}
 
-        {/* Products table */}
-        <div className="technical-border bg-surface-lowest overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border/30 bg-muted/30">
-                {["Product", "Status", "Price", "Variants", "Qikink", "Stock", "Actions"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="p-4 font-mono text-[11px] text-muted-foreground uppercase"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="p-8 text-center font-mono text-xs text-muted-foreground"
-                  >
-                    NO PRODUCTS YET — ADD ONE OR IMPORT THE PRODUCT SHEET
-                  </td>
-                </tr>
-              ) : (
-                products.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="border-b border-border/30 last:border-b-0 hover:bg-muted/40 transition-colors"
-                  >
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <ProductThumb src={product.images[0] || ""} alt={product.name} />
-                        <div>
-                          <p className="text-sm font-medium">{product.name}</p>
-                          <p className="font-mono text-[10px] text-muted-foreground">
-                            /products/{product.slug}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <span
-                        className={`font-mono text-[10px] px-2 py-0.5 border ${
-                          product.status === "active"
-                            ? "bg-secondary/10 text-secondary border-secondary/20"
-                            : "border-border/40 text-muted-foreground"
-                        }`}
-                      >
-                        {product.status === "active" ? "LIVE" : "DRAFT"}
-                      </span>
-                    </td>
-                    <td className="p-4 font-mono text-sm">
-                      {money(product.price, product.currency)}
-                    </td>
-                    <td className="p-4 font-mono text-sm">{product.variantCount}</td>
-                    <td className="p-4">
-                      <MappingBadge mapped={product.mappedCount} total={product.variantCount} />
-                    </td>
-                    <td className="p-4 font-mono text-sm">
-                      {product.trackInventory ? (
-                        <>
-                          {product.totalStock}{" "}
-                          <span className="text-[10px] text-muted-foreground">units</span>
-                        </>
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">ON DEMAND</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => void openEdit(product)}
-                          className="font-mono text-[11px] text-primary hover:underline"
-                        >
-                          {product.qikinkSynced ? "EDIT" : "MAP SKUS"}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product)}
-                          disabled={deletingId === product.id}
-                          className="font-mono text-[11px] text-destructive hover:underline disabled:opacity-50"
-                        >
-                          {deletingId === product.id ? "..." : "DELETE"}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* Products: status tabs, inline rename, publish, colours → sizes */}
+        <ProductCatalogTable
+          products={products}
+          onProductChange={(updated) =>
+            setProducts((prev) => prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)))
+          }
+          onEdit={(p) => void openEdit(p)}
+          onDelete={(p) => void handleDelete(p)}
+          deletingId={deletingId}
+        />
       </main>
     </div>
   );

@@ -22,7 +22,8 @@ src/
 │   │   ├── page.tsx + AdminDashboardClient.tsx   stats cards + quick-nav
 │   │   ├── orders/      OrdersClient.tsx          order queue + SYNC_QIKINK + NEW ORDER; drawer loads full detail, PUSH_TO_QIKINK / SYNC_STATUS, cancel warning
 │   │   │                NewOrderPanel.tsx         admin-created orders: product/variant picker, shipping, prepaid vs COD, push now
-│   │   ├── products/    ProductsClient.tsx        product CRUD with a size × colour grid (Store SKU + colour image per row), MAPPED x/y badge, ACTIVE locked until fully mapped; PRODUCT SHEET download + IMPORT SHEET
+│   │   ├── products/    ProductsClient.tsx        product form (size × colour grid: Store SKU + colour image per row; status review/draft/active); PRODUCT SHEET download + IMPORT SHEET
+│   │   │                ProductCatalogTable.tsx   ALL / IN REVIEW / LIVE / DRAFT tabs, click-to-rename, PUBLISH/UNPUBLISH, expand → colours (image + on/off switch) → size chips (on/off)
 │   │   │                SheetImportPanel.tsx      upload .xlsx → server preview (dryRun) → APPLY IMPORT
 │   │   ├── inventory/   InventoryClient.tsx       per-variant stock (CRITICAL ≤5 / LOW ≤20 / OPTIMAL)
 │   │   ├── settings/    SettingsClient.tsx        store settings (display only); live Qikink status, CHECK_SKUS, SYNC_ORDERS
