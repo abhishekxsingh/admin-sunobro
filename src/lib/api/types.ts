@@ -70,12 +70,15 @@ export type AdminProduct = {
   images: string[];
   sizes: string[];
   inStock: boolean;
-  status: "active" | "draft";
+  /** review = new, waiting for an admin; active = on the website; draft = hidden. */
+  status: "review" | "active" | "draft";
   /** Off for print-on-demand: stock is never decremented or enforced. */
   trackInventory: boolean;
   variantCount: number;
-  /** Variants that have a Qikink SKU. Publishing requires mappedCount === variantCount. */
+  /** Switched-on variants that have a Qikink Store SKU. Publishing needs all of them mapped. */
   mappedCount: number;
+  /** Variants switched on (shown on the website). */
+  enabledCount?: number;
   totalStock: number;
   qikinkSynced: boolean;
   variants?: ProductVariant[];
@@ -94,6 +97,8 @@ export type ProductVariant = {
   qikinkSku: string | null;
   /** Mockup for this variant's colour (shown on the product page). */
   image?: string | null;
+  /** false = switched off by an admin: hidden from the website. */
+  enabled?: boolean;
 };
 
 export type SheetImportResult = {
@@ -101,7 +106,7 @@ export type SheetImportResult = {
   problems: { where: string; message: string }[];
   products: {
     name: string;
-    status: "active" | "draft";
+    status: "review" | "active" | "draft";
     price: number;
     variants: number;
     mapped: number;
