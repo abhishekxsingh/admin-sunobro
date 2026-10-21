@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Upload, X } from "lucide-react";
+import { Check, Upload, X } from "lucide-react";
+import { Spinner } from "@/components/status";
 import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { QikinkExportResult } from "@/lib/api/types";
@@ -182,8 +183,9 @@ export function QikinkExportPanel({
             type="button"
             onClick={() => file && void run(file, false)}
             disabled={busy !== null || result.problems.length > 0}
-            className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40"
+            className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40 flex items-center gap-2"
           >
+            {busy === "apply" ? <Spinner /> : <Check className="h-3 w-3" aria-hidden />}
             {busy === "apply"
               ? "ADDING..."
               : `ADD ${created} NEW · UPDATE ${result.products.length - created}`}

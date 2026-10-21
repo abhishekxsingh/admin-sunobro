@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
+import { Spinner } from "@/components/status";
 import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct } from "@/lib/api/types";
@@ -267,8 +268,9 @@ export function ColourEntryForm({
             type="button"
             onClick={() => void submit()}
             disabled={busy || !colour.trim() || taken || chosen.length === 0}
-            className="bg-secondary text-secondary-foreground px-4 py-1.5 font-mono text-[11px] font-bold hover:opacity-90 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground px-4 py-1.5 font-mono text-[11px] font-bold hover:opacity-90 disabled:opacity-40"
           >
+            {busy ? <Spinner /> : <Plus className="h-3 w-3" aria-hidden />}
             {busy ? "ADDING..." : `${submitVerb} ${label}`}
           </button>
         </div>
@@ -378,16 +380,18 @@ export function AddSizeInline({
           type="button"
           onClick={() => void submit()}
           disabled={busy || !size.trim()}
-          className="bg-secondary text-secondary-foreground px-2 py-1 font-mono text-[10px] font-bold disabled:opacity-40"
+          className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 font-mono text-[10px] font-bold disabled:opacity-40"
         >
-          {busy ? "…" : "ADD"}
+          {busy ? <Spinner /> : <Plus className="h-3 w-3" aria-hidden />}
+          ADD
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="px-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
+          aria-label="Cancel"
+          className="px-1 text-muted-foreground hover:text-foreground"
         >
-          ✕
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
       {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}
@@ -445,16 +449,18 @@ export function ColourImageEditor({
           type="button"
           onClick={() => void save(link.trim())}
           disabled={busy}
-          className="bg-secondary text-secondary-foreground px-2 py-1 font-mono text-[10px] font-bold disabled:opacity-40"
+          className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 font-mono text-[10px] font-bold disabled:opacity-40"
         >
+          {busy ? <Spinner /> : <Check className="h-3 w-3" aria-hidden />}
           SAVE
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="px-1 font-mono text-[10px] text-muted-foreground hover:text-foreground"
+          aria-label="Cancel"
+          className="px-1 text-muted-foreground hover:text-foreground"
         >
-          ✕
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
       {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}

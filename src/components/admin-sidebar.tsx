@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import {
-  Boxes,
+  CircleUser,
   LayoutDashboard,
   LogOut,
   Moon,
+  ReceiptText,
   Settings,
-  ShoppingBag,
-  ShoppingCart,
+  Shirt,
   Sun,
-  User,
+  Warehouse,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useTheme } from "@/hooks/use-theme";
@@ -27,11 +27,11 @@ type NavItem = {
 
 const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", page: "dashboard", icon: LayoutDashboard },
-  { label: "Orders", href: "/admin/orders", page: "orders", icon: ShoppingCart },
-  { label: "Products", href: "/admin/products", page: "products", icon: ShoppingBag },
-  { label: "Inventory", href: "/admin/inventory", page: "inventory", icon: Boxes },
+  { label: "Orders", href: "/admin/orders", page: "orders", icon: ReceiptText },
+  { label: "Products", href: "/admin/products", page: "products", icon: Shirt },
+  { label: "Inventory", href: "/admin/inventory", page: "inventory", icon: Warehouse },
   { label: "Settings", href: "/admin/settings", page: "settings", icon: Settings },
-  { label: "Profile", href: "/admin/profile", page: "profile", icon: User },
+  { label: "Profile", href: "/admin/profile", page: "profile", icon: CircleUser },
 ];
 
 type Props = {
@@ -73,6 +73,7 @@ export function AdminSidebar({ activePage, adminName, adminRole, onLogout, loggi
             <Link
               key={page}
               href={href}
+              aria-current={isActive ? "page" : undefined}
               className={`flex items-center px-4 py-3 rounded-lg transition-all group ${
                 isActive
                   ? "bg-secondary/15 text-secondary font-bold translate-x-1"
@@ -111,6 +112,7 @@ export function AdminSidebar({ activePage, adminName, adminRole, onLogout, loggi
           </button>
           <button
             onClick={toggle}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground hover:text-primary transition-colors px-2 py-1 technical-border hover:bg-muted"
             title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >

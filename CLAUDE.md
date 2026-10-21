@@ -35,7 +35,7 @@ src/
 │   ├── demo-access/route.ts     dev shortcut — localhost only, open-redirect safe
 │   ├── globals.css              Tailwind v4, dark default, html.light overrides
 │   └── layout.tsx               no-flash theme script + JetBrains Mono
-├── components/  admin-sidebar.tsx, logo.tsx
+├── components/  admin-sidebar.tsx, logo.tsx, status.tsx (icon badges for order / product / Qikink status, Spinner, EmptyState — icons from lucide-react 1.x; reuse these instead of hand-rolled badges)
 ├── hooks/use-theme.ts           dark/light toggle, localStorage key sb_admin_theme
 ├── middleware.ts                guards /admin/* by sb_admin_session cookie presence
 └── lib/

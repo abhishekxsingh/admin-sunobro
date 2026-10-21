@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ImageOff, X } from "lucide-react";
+import { ImageOff, Save, X } from "lucide-react";
+import { Spinner } from "@/components/status";
 import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, VariationsResult } from "@/lib/api/types";
@@ -198,8 +199,9 @@ export function VariationsPanel({
               type="button"
               onClick={() => void send(false)}
               disabled={busy !== null || problems.length > 0}
-              className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40"
+              className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40 flex items-center gap-2"
             >
+              {busy === "save" ? <Spinner /> : <Save className="h-3 w-3" aria-hidden />}
               {busy === "save" ? "SAVING..." : `SAVE ${result.variants} VARIATIONS`}
             </button>
           </div>
