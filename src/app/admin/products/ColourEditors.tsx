@@ -91,6 +91,9 @@ export function ColourEntryForm({
   const rowFor = (s: string) => rows[s] ?? { on: true, sku: "" };
   const chosen = sizes.filter((s) => !already.has(s) && rowFor(s).on);
   const missingSku = chosen.filter((s) => !rowFor(s).sku.trim());
+  const wrongSku = chosen.filter(
+    (s) => rowFor(s).sku.trim() && !rowFor(s).sku.trim().startsWith("v-"),
+  );
 
   // Pasting a whole column of Store SKUs (one per line) into the first box
   // fills the sizes in order.
@@ -156,12 +159,16 @@ export function ColourEntryForm({
             className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
           >
             Colour (as named in Qikink)
+            <span className="text-destructive"> *</span>
           </label>
           <input
             id={`${idPrefix}-colour`}
             list={`${idPrefix}-colour-names`}
             value={colour}
-            onChange={(e) => setColour(e.target.value)}
+            // Pasting Qikink's Variation cell ("Black - S") keeps just the colour.
+            onChange={(e) =>
+              setColour(e.target.value.replace(/\s+-\s+(XS|S|M|L|XL|XXL|[2-5]XL)\s*$/i, ""))
+            }
             placeholder="e.g. Black"
             className="w-full bg-muted px-3 py-2 text-sm technical-border"
           />
@@ -204,8 +211,9 @@ export function ColourEntryForm({
 
       <div>
         <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1">
-          Sizes → Qikink Store SKU (starts with v-). Tip: paste the whole Store SKU column into the
-          first box to fill them in order.
+          Sizes → Qikink Store SKU (starts with v-)<span className="text-destructive"> *</span> for
+          every ticked size. Tip: paste the whole Store SKU column into the first box to fill them
+          in order.
         </p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {sizes.map((size, i) => {
@@ -247,12 +255,19 @@ export function ColourEntryForm({
         </div>
       </div>
 
+      {chosen.some((sz) => rowFor(sz).sku.trim() && !rowFor(sz).sku.trim().startsWith("v-")) && (
+        <p className="font-mono text-[10px] text-destructive">
+          That looks like the Product SKU (MRnHs-…). Use the Store SKU — the code starting with v-
+          in Qikink&apos;s Variations list.
+        </p>
+      )}
       {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
       <div className="flex items-center justify-between gap-3">
         <p className="font-mono text-[10px] text-muted-foreground">
           {chosen.length} size{chosen.length === 1 ? "" : "s"}
-          {missingSku.length ? ` · ${missingSku.length} without a Store SKU` : " · all mapped"}
-          {live && missingSku.length ? " — needed, the product is live" : ""}
+          {missingSku.length
+            ? ` · add the Store SKU for ${missingSku.join(", ")} — or untick ${missingSku.length === 1 ? "it" : "them"}`
+            : " · all mapped"}
         </p>
         <div className="flex gap-2">
           {existingColours.length > 0 && (
@@ -267,7 +282,16 @@ export function ColourEntryForm({
           <button
             type="button"
             onClick={() => void submit()}
-            disabled={busy || !colour.trim() || taken || chosen.length === 0}
+            // Every ticked size must carry its Store SKU: without it the size
+            // can't be ordered or printed.
+            disabled={
+              busy ||
+              !colour.trim() ||
+              taken ||
+              chosen.length === 0 ||
+              missingSku.length > 0 ||
+              wrongSku.length > 0
+            }
             className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground px-4 py-1.5 font-mono text-[11px] font-bold hover:opacity-90 disabled:opacity-40"
           >
             {busy ? <Spinner /> : <Plus className="h-3 w-3" aria-hidden />}

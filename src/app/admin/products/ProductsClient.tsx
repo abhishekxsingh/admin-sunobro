@@ -2,7 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, Plus, Save, Trash2, Upload, Wand2 } from "lucide-react";
+import {
+  CircleCheck,
+  CircleDashed,
+  Download,
+  FileSpreadsheet,
+  Plus,
+  Save,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
@@ -105,6 +114,18 @@ const splitList = (value: string) =>
 const errorMessage = (err: unknown, fallback: string) =>
   err instanceof ApiError || err instanceof Error ? err.message : fallback;
 
+/** Red asterisk for fields an order needs before Qikink can print it. */
+function Req() {
+  return (
+    <span className="text-destructive" title="Required to sell" aria-label="required">
+      {" "}
+      *
+    </span>
+  );
+}
+
+const isStoreSku = (sku: string) => sku.trim().startsWith("v-");
+
 function MappingBadge({ mapped, total }: { mapped: number; total: number }) {
   const complete = total > 0 && mapped === total;
   return (
@@ -132,8 +153,6 @@ export function ProductsClient() {
   const [variants, setVariants] = useState<VariantRow[]>([]);
   const [gridSizes, setGridSizes] = useState("S, M, L, XL");
   const [gridColors, setGridColors] = useState("Black");
-  const [skuPattern, setSkuPattern] = useState("");
-  const [colorCodes, setColorCodes] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -174,6 +193,22 @@ export function ProductsClient() {
   const onVariants = variants.filter((v) => v.enabled);
   const mappedCount = onVariants.filter((v) => v.qikinkSku.trim()).length;
   const fullyMapped = onVariants.length > 0 && mappedCount === onVariants.length;
+  const wrongSkus = variants.filter((v) => v.qikinkSku.trim() && !isStoreSku(v.qikinkSku));
+
+  // Everything an order needs: shoppers can only buy (and Qikink only print)
+  // when each of these is done. ACTIVE stays disabled until they all are.
+  const checklist = [
+    { ok: Boolean(form.name.trim()), label: "Product name" },
+    { ok: Number(form.price) > 0, label: "Price above ₹0" },
+    { ok: splitList(form.images).length > 0, label: "Cover image (first image link)" },
+    { ok: onVariants.length > 0, label: "At least one colour with sizes" },
+    {
+      ok: onVariants.length > 0 && mappedCount === onVariants.length,
+      label: `Store SKU on every size (${mappedCount}/${onVariants.length})`,
+    },
+    { ok: wrongSkus.length === 0, label: "Only Store SKUs (v-…), no Product SKUs" },
+  ];
+  const readyToSell = checklist.every((c) => c.ok);
 
   // Colour → sizes already in the form, and the sizes the add-colour block offers.
   const formColours = useMemo(() => {
@@ -333,30 +368,6 @@ export function ProductsClient() {
     );
   };
 
-  // Fill empty Qikink SKUs from a pattern like "MVnHs-{COLOR}-{SIZE}", with
-  // optional colour codes such as "Black=Bk, White=Wh".
-  const fillFromPattern = () => {
-    if (!skuPattern.trim()) return;
-    const codes = new Map(
-      splitList(colorCodes)
-        .map((pair) => pair.split("=").map((s) => s.trim()))
-        .filter(([name, code]) => name && code)
-        .map(([name, code]) => [name.toLowerCase(), code]),
-    );
-    setVariants((rows) =>
-      rows.map((row) =>
-        row.qikinkSku.trim()
-          ? row
-          : {
-              ...row,
-              qikinkSku: skuPattern
-                .replaceAll("{COLOR}", codes.get(row.color.toLowerCase()) || row.color)
-                .replaceAll("{SIZE}", row.size),
-            },
-      ),
-    );
-  };
-
   const updateRow = (index: number, patch: Partial<VariantRow>) =>
     setVariants((rows) => rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
 
@@ -364,11 +375,17 @@ export function ProductsClient() {
     e.preventDefault();
     setFormError(null);
     if (variants.length === 0) {
-      setFormError("Build the variant grid first — every product needs at least one size/colour.");
+      setFormError("Add at least one colour with its sizes first.");
+      return;
+    }
+    if (wrongSkus.length > 0) {
+      setFormError(
+        `${wrongSkus.map((v) => `${v.color} ${v.size}`).join(", ")}: that's the Product SKU — paste the Store SKU (v-…) instead.`,
+      );
       return;
     }
     if (duplicateQikinkSkus.size > 0) {
-      setFormError("Each variant needs its own Qikink SKU — fix the highlighted duplicates.");
+      setFormError("Each size needs its own Store SKU — fix the highlighted duplicates.");
       return;
     }
 
@@ -553,6 +570,12 @@ export function ProductsClient() {
           >
             <p className="font-mono text-[11px] uppercase tracking-widest">
               {view === "create" ? "New Product" : `Edit: ${editTarget?.name}`}
+              {view === "edit" && editTarget?.qikink?.productId && (
+                <span className="ml-3 normal-case tracking-normal text-primary">
+                  Qikink #{editTarget.qikink.productId}
+                  {editTarget.qikink.design ? ` · ${editTarget.qikink.design}` : ""}
+                </span>
+              )}
             </p>
 
             {/* Storefront listing */}
@@ -560,6 +583,7 @@ export function ProductsClient() {
               <div>
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
                   Name
+                  <Req />
                 </label>
                 <input
                   required
@@ -581,6 +605,7 @@ export function ProductsClient() {
               <div>
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
                   Base price (INR)
+                  <Req />
                 </label>
                 <input
                   required
@@ -607,6 +632,7 @@ export function ProductsClient() {
               <div className="md:col-span-2">
                 <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
                   Image URLs (one per line — first is the cover; Qikink mockup links work)
+                  <Req />
                 </label>
                 <textarea
                   value={form.images}
@@ -637,66 +663,19 @@ export function ProductsClient() {
                 <MappingBadge mapped={mappedCount} total={onVariants.length} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-                <MultiSelect
-                  id="grid-sizes"
-                  label="Sizes"
-                  options={SIZE_LADDER}
-                  value={splitList(gridSizes)}
-                  onChange={(next) => setGridSizes(next.join(", "))}
-                  placeholder="Pick sizes"
-                  keepOrder
-                  customHint="Add size"
-                />
-                <MultiSelect
-                  id="grid-colours"
-                  label="Colours (as named in Qikink)"
-                  options={COMMON_COLOURS}
-                  value={splitList(gridColors)}
-                  onChange={(next) => setGridColors(next.join(", "))}
-                  placeholder="Pick colours"
-                  customHint="Add colour"
-                />
-                <button
-                  type="button"
-                  onClick={buildGrid}
-                  className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all"
-                >
-                  BUILD GRID
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Optional SKU pattern — {"{COLOR}"} and {"{SIZE}"} tokens
-                  </label>
-                  <input
-                    value={skuPattern}
-                    onChange={(e) => setSkuPattern(e.target.value)}
-                    placeholder="MVnHs-{COLOR}-{SIZE}"
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Qikink colour codes (optional)
-                  </label>
-                  <input
-                    value={colorCodes}
-                    onChange={(e) => setColorCodes(e.target.value)}
-                    placeholder="Black=Bk, White=Wh"
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={fillFromPattern}
-                  disabled={!skuPattern.trim() || variants.length === 0}
-                  className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2 disabled:opacity-40"
-                >
-                  <Wand2 className="h-3 w-3" /> FILL EMPTY
-                </button>
+              <div className="grid gap-2 p-3 technical-border border-dashed font-mono text-[10px] text-muted-foreground md:grid-cols-3">
+                <p>
+                  <span className="text-foreground">1 · Colour</span> — Qikink → My Products → the
+                  product → Variations. In “Black - S” the colour is <b>Black</b>.
+                </p>
+                <p>
+                  <span className="text-foreground">2 · Store SKU</span> — the <b>v-…</b> code of
+                  each size. Ignore the Product SKU (MRnHs-…), design name and cost.
+                </p>
+                <p>
+                  <span className="text-foreground">3 · Image</span> — 👁 on a row of that colour →
+                  right-click the picture → Copy image address. Then ADD, next colour, SAVE PRODUCT.
+                </p>
               </div>
 
               <ColourEntryForm
@@ -706,9 +685,43 @@ export function ProductsClient() {
                 existing={formColours}
                 live={form.status === "active"}
                 mergeExisting
-                startOpen={view === "edit"}
+                startOpen
                 onSubmit={addColourToForm}
               />
+
+              <details className="technical-border px-3 py-2">
+                <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Advanced · build an empty grid of sizes × colours and type SKUs row by row
+                </summary>
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                  <MultiSelect
+                    id="grid-sizes"
+                    label="Sizes"
+                    options={SIZE_LADDER}
+                    value={splitList(gridSizes)}
+                    onChange={(next) => setGridSizes(next.join(", "))}
+                    placeholder="Pick sizes"
+                    keepOrder
+                    customHint="Add size"
+                  />
+                  <MultiSelect
+                    id="grid-colours"
+                    label="Colours (as named in Qikink)"
+                    options={COMMON_COLOURS}
+                    value={splitList(gridColors)}
+                    onChange={(next) => setGridColors(next.join(", "))}
+                    placeholder="Pick colours"
+                    customHint="Add colour"
+                  />
+                  <button
+                    type="button"
+                    onClick={buildGrid}
+                    className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all"
+                  >
+                    BUILD GRID
+                  </button>
+                </div>
+              </details>
 
               <div className="technical-border overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -717,7 +730,7 @@ export function ProductsClient() {
                       {[
                         "Size",
                         "Colour",
-                        "Qikink Store SKU (v-…)",
+                        "Qikink Store SKU (v-…) *",
                         "Colour image URL",
                         "Price override",
                         ...(form.trackInventory ? ["Stock"] : []),
@@ -737,13 +750,14 @@ export function ProductsClient() {
                           colSpan={8}
                           className="p-6 text-center font-mono text-[11px] text-muted-foreground"
                         >
-                          ENTER SIZES + COLOURS, THEN BUILD GRID
+                          ADD A COLOUR ABOVE — ITS SIZES AND STORE SKUS APPEAR HERE
                         </td>
                       </tr>
                     ) : (
                       variants.map((row, i) => {
                         const duplicate = duplicateQikinkSkus.has(row.qikinkSku.trim());
                         const missing = row.enabled && !row.qikinkSku.trim();
+                        const wrong = Boolean(row.qikinkSku.trim()) && !isStoreSku(row.qikinkSku);
                         return (
                           <tr
                             key={rowKey(row.size, row.color) + i}
@@ -762,9 +776,19 @@ export function ProductsClient() {
                                 onChange={(e) => updateRow(i, { qikinkSku: e.target.value })}
                                 placeholder="paste Store SKU (v-…)"
                                 className={`w-full bg-muted px-2 py-1 font-mono text-xs technical-border ${
-                                  duplicate || missing ? "border-destructive/60" : ""
+                                  duplicate || missing || wrong ? "border-destructive/60" : ""
                                 }`}
                               />
+                              {wrong && (
+                                <p className="font-mono text-[9px] text-destructive mt-0.5">
+                                  PRODUCT SKU — USE THE STORE SKU (v-…)
+                                </p>
+                              )}
+                              {missing && !wrong && (
+                                <p className="font-mono text-[9px] text-destructive mt-0.5">
+                                  REQUIRED — OR REMOVE THIS SIZE
+                                </p>
+                              )}
                               {duplicate && (
                                 <p className="font-mono text-[9px] text-destructive mt-0.5">
                                   USED BY ANOTHER VARIANT
@@ -824,6 +848,42 @@ export function ProductsClient() {
               </div>
             </div>
 
+            {/* Ready to sell */}
+            <div
+              className={`p-4 technical-border ${
+                readyToSell
+                  ? "border-secondary/40 bg-secondary/5"
+                  : "border-tertiary/40 bg-tertiary/5"
+              }`}
+            >
+              <p className="font-mono text-[11px] uppercase tracking-widest mb-2">
+                {readyToSell
+                  ? "Ready to sell — orders will reach Qikink"
+                  : `Before customers can order (${checklist.filter((c) => !c.ok).length} left)`}
+              </p>
+              <ul className="grid gap-1 sm:grid-cols-2 lg:grid-cols-3">
+                {checklist.map((c) => (
+                  <li
+                    key={c.label}
+                    className={`flex items-center gap-2 font-mono text-[11px] ${
+                      c.ok ? "text-secondary" : "text-foreground"
+                    }`}
+                  >
+                    {c.ok ? (
+                      <CircleCheck className="h-3.5 w-3.5 shrink-0" />
+                    ) : (
+                      <CircleDashed className="h-3.5 w-3.5 shrink-0 text-tertiary" />
+                    )}
+                    {c.label}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+                <span className="text-destructive">*</span> required to sell. You can save a product
+                in review with things missing and finish it later.
+              </p>
+            </div>
+
             {/* Publish */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
@@ -835,7 +895,12 @@ export function ProductsClient() {
                     <button
                       key={s}
                       type="button"
-                      disabled={s === "active" && !fullyMapped}
+                      disabled={s === "active" && !readyToSell}
+                      title={
+                        s === "active" && !readyToSell
+                          ? "Finish the checklist above to put this on the website"
+                          : undefined
+                      }
                       onClick={() => setForm((f) => ({ ...f, status: s }))}
                       className={`px-4 py-2 font-mono text-[11px] technical-border transition-all disabled:opacity-40 ${
                         form.status === s
@@ -851,9 +916,9 @@ export function ProductsClient() {
                     </button>
                   ))}
                 </div>
-                {!fullyMapped && (
+                {!readyToSell && (
                   <p className="font-mono text-[10px] text-muted-foreground mt-1">
-                    Map every variant to a Qikink SKU to publish.
+                    ACTIVE unlocks when the checklist is complete.
                   </p>
                 )}
               </div>

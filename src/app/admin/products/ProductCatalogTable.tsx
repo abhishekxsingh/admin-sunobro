@@ -15,6 +15,7 @@ import {
   PackageOpen,
   Pencil,
   ScanSearch,
+  Search,
   SquarePen,
   Trash2,
   type LucideIcon,
@@ -24,6 +25,7 @@ import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, ProductVariant } from "@/lib/api/types";
 import { VariationsPanel } from "./VariationsPanel";
+import { QikinkIdentity } from "./QikinkIdentity";
 import { AddColourCard, AddSizeInline, ColourImageEditor } from "./ColourEditors";
 
 type Status = AdminProduct["status"];
@@ -281,7 +283,17 @@ export function ProductCatalogTable({
     }),
     [products],
   );
-  const visible = filter === "all" ? products : products.filter((p) => p.status === filter);
+  const [query, setQuery] = useState("");
+  const term = query.trim().toLowerCase();
+  // Search by our name/slug or by what Qikink shows: product ID or design file.
+  const matches = (p: AdminProduct) =>
+    !term ||
+    [p.name, p.slug, p.qikink?.productId, p.qikink?.design].some((v) =>
+      String(v || "")
+        .toLowerCase()
+        .includes(term),
+    );
+  const visible = products.filter((p) => (filter === "all" || p.status === filter) && matches(p));
 
   const save = async (product: AdminProduct, patch: { name?: string; status?: Status }) => {
     setBusyId(product.id);
@@ -308,6 +320,16 @@ export function ProductCatalogTable({
 
   return (
     <div className="space-y-4">
+      <div className="relative max-w-md">
+        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          aria-label="Search products"
+          placeholder="Search by name, Qikink product ID or design file…"
+          className="w-full bg-surface-lowest technical-border py-2 pl-9 pr-3 text-sm"
+        />
+      </div>
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter products by status">
         {TABS.map(([key, label, Icon]) => (
           <button
@@ -348,7 +370,9 @@ export function ProductCatalogTable({
                   <EmptyState icon={PackageOpen}>
                     {products.length === 0
                       ? "NO PRODUCTS YET — UPLOAD THE QIKINK EXPORT OR ADD ONE"
-                      : "NOTHING IN THIS LIST"}
+                      : term
+                        ? `NOTHING MATCHES “${query.trim()}”`
+                        : "NOTHING IN THIS LIST"}
                   </EmptyState>
                 </td>
               </tr>
@@ -410,6 +434,7 @@ export function ProductCatalogTable({
                             <p className="font-mono text-[10px] text-muted-foreground">
                               /products/{product.slug}
                             </p>
+                            <QikinkIdentity product={product} />
                           </div>
                         </div>
                       </td>
