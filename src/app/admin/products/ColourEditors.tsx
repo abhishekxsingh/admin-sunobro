@@ -161,7 +161,10 @@ export function ColourEntryForm({
             id={`${idPrefix}-colour`}
             list={`${idPrefix}-colour-names`}
             value={colour}
-            onChange={(e) => setColour(e.target.value)}
+            // Pasting Qikink's Variation cell ("Black - S") keeps just the colour.
+            onChange={(e) =>
+              setColour(e.target.value.replace(/\s+-\s+(XS|S|M|L|XL|XXL|[2-5]XL)\s*$/i, ""))
+            }
             placeholder="e.g. Black"
             className="w-full bg-muted px-3 py-2 text-sm technical-border"
           />
@@ -247,6 +250,12 @@ export function ColourEntryForm({
         </div>
       </div>
 
+      {chosen.some((sz) => rowFor(sz).sku.trim() && !rowFor(sz).sku.trim().startsWith("v-")) && (
+        <p className="font-mono text-[10px] text-destructive">
+          That looks like the Product SKU (MRnHs-…). Use the Store SKU — the code starting with v-
+          in Qikink&apos;s Variations list.
+        </p>
+      )}
       {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
       <div className="flex items-center justify-between gap-3">
         <p className="font-mono text-[10px] text-muted-foreground">
