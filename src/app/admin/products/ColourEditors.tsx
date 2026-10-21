@@ -8,7 +8,7 @@ import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct } from "@/lib/api/types";
 
 export const SIZE_LADDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
-const COMMON_COLOURS = [
+export const COMMON_COLOURS = [
   "White",
   "Black",
   "Navy Blue",
