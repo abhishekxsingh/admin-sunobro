@@ -1,5 +1,7 @@
 import { api } from "./client";
 import type {
+  AdminCustomer,
+  AdminCustomerDetail,
   TeamCredentials,
   TeamMember,
   Coupon,
@@ -33,7 +35,12 @@ export const adminAuthApi = {
 export const adminApi = {
   stats: () => api.get<AdminStats>("/admin/stats"),
   inventory: () => api.get<InventoryItem[]>("/admin/inventory"),
-  orders: () => api.get<QueueOrder[]>("/admin/orders"),
+  orders: (params: { q?: string; status?: string; limit?: number } = {}) => {
+    const qs = new URLSearchParams({ limit: String(params.limit ?? 100) });
+    if (params.q?.trim()) qs.set("q", params.q.trim());
+    if (params.status && params.status !== "all") qs.set("status", params.status);
+    return api.get<QueueOrder[]>(`/admin/orders?${qs}`);
+  },
   orderDetail: (id: string) => api.get<AdminOrder>(`/admin/orders/${id}`),
   createOrder: (payload: AdminCreateOrderPayload) => api.post<QueueOrder>("/admin/orders", payload),
   updateOrderStatus: (id: string, payload: { status: AdminOrder["status"]; note?: string }) =>
@@ -115,4 +122,12 @@ export const adminMembersApi = {
     api.put<TeamMember>(`/admin/members/${id}`, payload),
   resetPassword: (id: string) => api.post<TeamCredentials>(`/admin/members/${id}/reset-password`),
   remove: (id: string) => api.delete<void>(`/admin/members/${id}`),
+};
+
+export const adminCustomersApi = {
+  list: (q = "") =>
+    api.get<AdminCustomer[]>(
+      `/admin/customers?limit=100${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ""}`,
+    ),
+  get: (id: string) => api.get<AdminCustomerDetail>(`/admin/customers/${id}`),
 };

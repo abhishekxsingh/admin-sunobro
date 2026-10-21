@@ -3,6 +3,7 @@
 import Link from "next/link";
 import {
   CircleUser,
+  Contact,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -18,7 +19,15 @@ import { Logo } from "@/components/logo";
 import { useTheme } from "@/hooks/use-theme";
 
 export type AdminSidebarPage =
-  "dashboard" | "orders" | "products" | "inventory" | "coupons" | "team" | "settings" | "profile";
+  | "dashboard"
+  | "orders"
+  | "products"
+  | "customers"
+  | "inventory"
+  | "coupons"
+  | "team"
+  | "settings"
+  | "profile";
 
 type NavItem = {
   label: string;
@@ -31,6 +40,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/admin", page: "dashboard", icon: LayoutDashboard },
   { label: "Orders", href: "/admin/orders", page: "orders", icon: ReceiptText },
   { label: "Products", href: "/admin/products", page: "products", icon: Shirt },
+  { label: "Customers", href: "/admin/customers", page: "customers", icon: Contact },
   { label: "Inventory", href: "/admin/inventory", page: "inventory", icon: Warehouse },
   { label: "Coupons", href: "/admin/coupons", page: "coupons", icon: TicketPercent },
   { label: "Team", href: "/admin/team", page: "team", icon: UsersRound },
