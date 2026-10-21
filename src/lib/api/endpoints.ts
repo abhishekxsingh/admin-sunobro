@@ -1,5 +1,11 @@
 import { api } from "./client";
 import type {
+  TeamCredentials,
+  TeamMember,
+  Coupon,
+  CouponCustomer,
+  CouponPayload,
+  CouponRedemption,
   AdminCreateOrderPayload,
   AdminLoginPayload,
   AdminOrder,
@@ -11,8 +17,10 @@ import type {
   InventoryItem,
   QikinkStatus,
   QikinkSyncResult,
+  QikinkExportResult,
   QueueOrder,
   SheetImportResult,
+  VariationsResult,
 } from "./types";
 
 export const adminAuthApi = {
@@ -61,8 +69,24 @@ export const adminProductsApi = {
       products,
     }),
   syncQikink: (id: string) => api.post<QikinkSyncResult>(`/admin/products/${id}/sync-qikink`),
+  addVariants: (
+    id: string,
+    payload: {
+      color: string;
+      image?: string;
+      sizes: { size: string; qikinkSku?: string; price?: number }[];
+    },
+  ) => api.post<AdminProduct>(`/admin/products/${id}/variants`, payload),
+  setColourImage: (id: string, payload: { color: string; image: string }) =>
+    api.put<AdminProduct>(`/admin/products/${id}/colour-image`, payload),
   setAvailability: (id: string, payload: { color: string; size?: string; enabled: boolean }) =>
     api.put<AdminProduct>(`/admin/products/${id}/availability`, payload),
+  importQikinkExport: (payload: { file: string; dryRun: boolean }) =>
+    api.post<QikinkExportResult>("/admin/products/qikink-export", payload),
+  saveVariations: (
+    id: string,
+    payload: { text: string; images: Record<string, string>; dryRun: boolean },
+  ) => api.post<VariationsResult>(`/admin/products/${id}/qikink-variations`, payload),
   importSheet: (payload: { file: string; dryRun: boolean }) =>
     api.post<SheetImportResult>("/admin/products/import", payload),
 };
@@ -71,4 +95,24 @@ export const adminProfileApi = {
   update: (payload: AdminProfileUpdatePayload) => api.put<AdminUser>("/admin/profile", payload),
   changePassword: (payload: ChangePasswordPayload) =>
     api.put<void>("/admin/profile/password", payload),
+};
+
+export const adminCouponsApi = {
+  list: () => api.get<Coupon[]>("/admin/coupons"),
+  create: (payload: CouponPayload) => api.post<Coupon>("/admin/coupons", payload),
+  update: (id: string, payload: CouponPayload) => api.put<Coupon>(`/admin/coupons/${id}`, payload),
+  remove: (id: string) => api.delete<void>(`/admin/coupons/${id}`),
+  redemptions: (id: string) => api.get<CouponRedemption[]>(`/admin/coupons/${id}/redemptions`),
+  searchCustomers: (q: string) =>
+    api.get<CouponCustomer[]>(`/admin/customers/search?q=${encodeURIComponent(q)}`),
+};
+
+export const adminMembersApi = {
+  list: () => api.get<TeamMember[]>("/admin/members"),
+  create: (payload: { name: string; email: string; role: "admin" | "ops"; password?: string }) =>
+    api.post<TeamCredentials>("/admin/members", payload),
+  update: (id: string, payload: { name?: string; role?: "admin" | "ops"; active?: boolean }) =>
+    api.put<TeamMember>(`/admin/members/${id}`, payload),
+  resetPassword: (id: string) => api.post<TeamCredentials>(`/admin/members/${id}/reset-password`),
+  remove: (id: string) => api.delete<void>(`/admin/members/${id}`),
 };

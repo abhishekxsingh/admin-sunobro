@@ -2,13 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, Plus, Trash2, Wand2 } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, Save, Trash2, Upload, Wand2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, AdminUser } from "@/lib/api/types";
 import { SheetImportPanel } from "./SheetImportPanel";
+import { QikinkExportPanel } from "./QikinkExportPanel";
 import { ProductCatalogTable } from "./ProductCatalogTable";
+import { Spinner } from "@/components/status";
+import {
+  COMMON_COLOURS,
+  ColourEntryForm,
+  SIZE_LADDER,
+  sizesFor,
+  type ColourEntry,
+} from "./ColourEditors";
+import { MultiSelect } from "@/components/multi-select";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
   {
@@ -69,6 +79,8 @@ type VariantRow = {
   price: string;
   stock: string;
   image: string;
+  /** false = switched off in the catalog (hidden, needs no Store SKU) */
+  enabled: boolean;
 };
 
 const EMPTY_FORM: ProductForm = {
@@ -126,6 +138,7 @@ export function ProductsClient() {
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [showImport, setShowImport] = useState(false);
+  const [showQikinkExport, setShowQikinkExport] = useState(false);
   const [notice, setNotice] = useState<{ message: string; error?: boolean } | null>(null);
 
   useEffect(() => {
@@ -158,8 +171,74 @@ export function ProductsClient() {
     };
   }, [router]);
 
-  const mappedCount = variants.filter((v) => v.qikinkSku.trim()).length;
-  const fullyMapped = variants.length > 0 && mappedCount === variants.length;
+  const onVariants = variants.filter((v) => v.enabled);
+  const mappedCount = onVariants.filter((v) => v.qikinkSku.trim()).length;
+  const fullyMapped = onVariants.length > 0 && mappedCount === onVariants.length;
+
+  // Colour → sizes already in the form, and the sizes the add-colour block offers.
+  const formColours = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    variants.forEach((v) => (map[v.color] = [...(map[v.color] || []), v.size]));
+    return map;
+  }, [variants]);
+  const formSizes = useMemo(() => {
+    const base = sizesFor(editTarget);
+    const extra = variants.map((v) => v.size).filter((s) => !base.includes(s));
+    return [...new Set([...base, ...extra])];
+  }, [editTarget, variants]);
+
+  // Adds a colour (or missing sizes of an existing one) to the form; saved with SAVE PRODUCT.
+  const addColourToForm = async (entry: ColourEntry) => {
+    const clash = entry.sizes.find(
+      (s) => s.qikinkSku && variants.some((v) => v.qikinkSku.trim() === s.qikinkSku),
+    );
+    if (clash) throw new Error(`Store SKU ${clash.qikinkSku} is already used on this product.`);
+    const sameColour = variants.find((v) => v.color.toLowerCase() === entry.color.toLowerCase());
+    const image = entry.image || sameColour?.image || "";
+    const added = entry.sizes.map((s) => ({
+      size: s.size,
+      color: entry.color,
+      sku: "",
+      qikinkSku: s.qikinkSku || "",
+      price: "",
+      stock: "0",
+      image,
+      enabled: true,
+    }));
+    setVariants((rows) => {
+      // Keep each colour's rows together, in size order.
+      const next = [...rows];
+      const lastOfColour = next
+        .map((r) => r.color.toLowerCase())
+        .lastIndexOf(entry.color.toLowerCase());
+      next.splice(lastOfColour === -1 ? next.length : lastOfColour + 1, 0, ...added);
+      const order = (size: string) => {
+        const i = SIZE_LADDER.indexOf(size.toUpperCase());
+        return i === -1 ? SIZE_LADDER.length : i;
+      };
+      const colourOrder = [...new Set(next.map((r) => r.color.toLowerCase()))];
+      return next.sort(
+        (a, b) =>
+          colourOrder.indexOf(a.color.toLowerCase()) - colourOrder.indexOf(b.color.toLowerCase()) ||
+          order(a.size) - order(b.size),
+      );
+    });
+    // Keep the BUILD GRID boxes in step so a later rebuild doesn't drop these rows.
+    const addTo = (list: string, values: string[]) => {
+      const items = splitList(list);
+      values.forEach((v) => {
+        if (!items.some((i) => i.toLowerCase() === v.toLowerCase())) items.push(v);
+      });
+      return items.join(", ");
+    };
+    setGridColors((g) => addTo(g, [entry.color]));
+    setGridSizes((g) =>
+      addTo(
+        g,
+        entry.sizes.map((s) => s.size),
+      ),
+    );
+  };
 
   const liveUnmapped = products.filter((p) => p.status === "active" && !p.qikinkSynced);
   const inReview = products.filter((p) => p.status === "review").length;
@@ -220,6 +299,7 @@ export function ProductsClient() {
         price: v.price != null ? String(v.price) : "",
         stock: String(v.stock ?? 0),
         image: v.image || "",
+        enabled: v.enabled !== false,
       }));
       setVariants(rows);
       setGridSizes([...new Set(rows.map((r) => r.size))].join(", "));
@@ -246,6 +326,7 @@ export function ProductsClient() {
               price: "",
               stock: "0",
               image: "",
+              enabled: true,
             },
         ),
       ),
@@ -389,6 +470,12 @@ export function ProductsClient() {
                 <Download className="h-3.5 w-3.5" /> PRODUCT SHEET
               </a>
               <button
+                onClick={() => setShowQikinkExport(true)}
+                className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
+              >
+                <Upload className="h-3.5 w-3.5" /> QIKINK EXPORT
+              </button>
+              <button
                 onClick={() => setShowImport(true)}
                 className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
               >
@@ -407,18 +494,21 @@ export function ProductsClient() {
         {/* How listing ↔ Qikink works */}
         <section className="mb-8 p-4 technical-border bg-surface-container font-mono text-[10px] text-muted-foreground grid md:grid-cols-4 gap-4">
           {[
-            ["01 · DESIGN", "Create the product in dashboard.qikink.com → My Products."],
             [
-              "02 · FILL THE SHEET",
-              "One row per colour × size with its Store SKU (v-…) from Product Variations — not the Product SKU.",
+              "01 · QIKINK EXPORT",
+              "Design in Qikink → My Products → Export. Upload it with QIKINK EXPORT: every product arrives IN REVIEW.",
             ],
             [
-              "03 · IMPORT",
-              "IMPORT SHEET → check the preview → APPLY. Re-upload any time to update.",
+              "02 · ADD VARIATIONS",
+              "On each product: paste its Product Variations table from Qikink and one image link per colour.",
             ],
             [
-              "04 · LIVE",
-              "Products set to active go live once every variant has a Store SKU. Paid orders push to Qikink.",
+              "03 · REVIEW",
+              "Rename if needed, switch off colours you don't want, check the colours and sizes.",
+            ],
+            [
+              "04 · PUBLISH",
+              "PUBLISH puts it on the website. Paid orders push to Qikink by Store SKU. (Excel: PRODUCT SHEET / IMPORT SHEET.)",
             ],
           ].map(([title, body]) => (
             <div key={title}>
@@ -442,6 +532,13 @@ export function ProductsClient() {
           >
             {notice.message}
           </p>
+        )}
+
+        {showQikinkExport && (
+          <QikinkExportPanel
+            onClose={() => setShowQikinkExport(false)}
+            onApplied={reloadProducts}
+          />
         )}
 
         {showImport && (
@@ -537,30 +634,29 @@ export function ProductsClient() {
                 <p className="font-mono text-[11px] uppercase tracking-widest">
                   Variants → Qikink SKUs
                 </p>
-                <MappingBadge mapped={mappedCount} total={variants.length} />
+                <MappingBadge mapped={mappedCount} total={onVariants.length} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Sizes
-                  </label>
-                  <input
-                    value={gridSizes}
-                    onChange={(e) => setGridSizes(e.target.value)}
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Colours
-                  </label>
-                  <input
-                    value={gridColors}
-                    onChange={(e) => setGridColors(e.target.value)}
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
+                <MultiSelect
+                  id="grid-sizes"
+                  label="Sizes"
+                  options={SIZE_LADDER}
+                  value={splitList(gridSizes)}
+                  onChange={(next) => setGridSizes(next.join(", "))}
+                  placeholder="Pick sizes"
+                  keepOrder
+                  customHint="Add size"
+                />
+                <MultiSelect
+                  id="grid-colours"
+                  label="Colours (as named in Qikink)"
+                  options={COMMON_COLOURS}
+                  value={splitList(gridColors)}
+                  onChange={(next) => setGridColors(next.join(", "))}
+                  placeholder="Pick colours"
+                  customHint="Add colour"
+                />
                 <button
                   type="button"
                   onClick={buildGrid}
@@ -603,6 +699,17 @@ export function ProductsClient() {
                 </button>
               </div>
 
+              <ColourEntryForm
+                key={editTarget?.id ?? "new"}
+                idPrefix={`form-colour-${editTarget?.id ?? "new"}`}
+                sizes={formSizes}
+                existing={formColours}
+                live={form.status === "active"}
+                mergeExisting
+                startOpen={view === "edit"}
+                onSubmit={addColourToForm}
+              />
+
               <div className="technical-border overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -636,14 +743,19 @@ export function ProductsClient() {
                     ) : (
                       variants.map((row, i) => {
                         const duplicate = duplicateQikinkSkus.has(row.qikinkSku.trim());
-                        const missing = !row.qikinkSku.trim();
+                        const missing = row.enabled && !row.qikinkSku.trim();
                         return (
                           <tr
                             key={rowKey(row.size, row.color) + i}
                             className="border-b border-border/30 last:border-b-0"
                           >
                             <td className="p-2 font-mono text-xs">{row.size}</td>
-                            <td className="p-2 font-mono text-xs">{row.color}</td>
+                            <td className="p-2 font-mono text-xs">
+                              {row.color}
+                              {!row.enabled && (
+                                <span className="ml-1 text-[9px] text-muted-foreground">(OFF)</span>
+                              )}
+                            </td>
                             <td className="p-2">
                               <input
                                 value={row.qikinkSku}
@@ -756,8 +868,9 @@ export function ProductsClient() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
+                  {saving ? <Spinner /> : <Save className="h-3 w-3" aria-hidden />}
                   {saving ? "SAVING..." : "SAVE PRODUCT"}
                 </button>
               </div>

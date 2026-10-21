@@ -5,14 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import {
-  Boxes,
   ChevronRight,
-  MemoryStick,
-  Cable,
-  CircuitBoard,
-  ShoppingBag,
-  ShoppingCart,
+  ReceiptText,
   Settings,
+  Shirt,
+  Warehouse,
   TrendingUp,
   Wallet,
 } from "lucide-react";
@@ -64,7 +61,7 @@ const DEMO_QUEUE: QueueOrder[] = [
   },
 ];
 
-const INVENTORY_ICONS = [MemoryStick, Cable, CircuitBoard];
+const INVENTORY_ICONS = [Shirt];
 
 const statusTone = (status: InventoryItem["status"]) =>
   status === "ON_DEMAND"
@@ -83,21 +80,21 @@ const QUICK_NAV = [
     label: "Orders",
     sub: "Manage fulfillment queue",
     href: "/admin/orders",
-    icon: ShoppingCart,
+    icon: ReceiptText,
     metric: (s: AdminStats) => `${s.activeOrders.toLocaleString()} active`,
   },
   {
     label: "Products",
     sub: "Catalog & pricing",
     href: "/admin/products",
-    icon: ShoppingBag,
+    icon: Shirt,
     metric: () => "Manage catalog",
   },
   {
     label: "Inventory",
     sub: "Stock & variants",
     href: "/admin/inventory",
-    icon: Boxes,
+    icon: Warehouse,
     metric: () => "Monitor stock",
   },
   {
@@ -238,7 +235,7 @@ export function AdminDashboardClient() {
               transition={{ duration: 0.5, delay: 0.08 }}
               className="p-6 technical-border bg-surface-lowest hover:bg-surface-container transition-colors relative overflow-hidden"
             >
-              <ShoppingCart className="absolute top-4 right-4 h-14 w-14 opacity-10" />
+              <ReceiptText className="absolute top-4 right-4 h-14 w-14 opacity-10" />
               <p className="font-mono text-[11px] text-muted-foreground mb-4 uppercase tracking-tighter">
                 Active Orders
               </p>
