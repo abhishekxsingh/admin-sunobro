@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, Plus, Save, Trash2, Upload, Wand2 } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, Save, Trash2, Upload } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
@@ -132,8 +132,6 @@ export function ProductsClient() {
   const [variants, setVariants] = useState<VariantRow[]>([]);
   const [gridSizes, setGridSizes] = useState("S, M, L, XL");
   const [gridColors, setGridColors] = useState("Black");
-  const [skuPattern, setSkuPattern] = useState("");
-  const [colorCodes, setColorCodes] = useState("");
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -329,30 +327,6 @@ export function ProductsClient() {
               enabled: true,
             },
         ),
-      ),
-    );
-  };
-
-  // Fill empty Qikink SKUs from a pattern like "MVnHs-{COLOR}-{SIZE}", with
-  // optional colour codes such as "Black=Bk, White=Wh".
-  const fillFromPattern = () => {
-    if (!skuPattern.trim()) return;
-    const codes = new Map(
-      splitList(colorCodes)
-        .map((pair) => pair.split("=").map((s) => s.trim()))
-        .filter(([name, code]) => name && code)
-        .map(([name, code]) => [name.toLowerCase(), code]),
-    );
-    setVariants((rows) =>
-      rows.map((row) =>
-        row.qikinkSku.trim()
-          ? row
-          : {
-              ...row,
-              qikinkSku: skuPattern
-                .replaceAll("{COLOR}", codes.get(row.color.toLowerCase()) || row.color)
-                .replaceAll("{SIZE}", row.size),
-            },
       ),
     );
   };
@@ -637,66 +611,19 @@ export function ProductsClient() {
                 <MappingBadge mapped={mappedCount} total={onVariants.length} />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-                <MultiSelect
-                  id="grid-sizes"
-                  label="Sizes"
-                  options={SIZE_LADDER}
-                  value={splitList(gridSizes)}
-                  onChange={(next) => setGridSizes(next.join(", "))}
-                  placeholder="Pick sizes"
-                  keepOrder
-                  customHint="Add size"
-                />
-                <MultiSelect
-                  id="grid-colours"
-                  label="Colours (as named in Qikink)"
-                  options={COMMON_COLOURS}
-                  value={splitList(gridColors)}
-                  onChange={(next) => setGridColors(next.join(", "))}
-                  placeholder="Pick colours"
-                  customHint="Add colour"
-                />
-                <button
-                  type="button"
-                  onClick={buildGrid}
-                  className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all"
-                >
-                  BUILD GRID
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Optional SKU pattern — {"{COLOR}"} and {"{SIZE}"} tokens
-                  </label>
-                  <input
-                    value={skuPattern}
-                    onChange={(e) => setSkuPattern(e.target.value)}
-                    placeholder="MVnHs-{COLOR}-{SIZE}"
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Qikink colour codes (optional)
-                  </label>
-                  <input
-                    value={colorCodes}
-                    onChange={(e) => setColorCodes(e.target.value)}
-                    placeholder="Black=Bk, White=Wh"
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={fillFromPattern}
-                  disabled={!skuPattern.trim() || variants.length === 0}
-                  className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2 disabled:opacity-40"
-                >
-                  <Wand2 className="h-3 w-3" /> FILL EMPTY
-                </button>
+              <div className="grid gap-2 p-3 technical-border border-dashed font-mono text-[10px] text-muted-foreground md:grid-cols-3">
+                <p>
+                  <span className="text-foreground">1 · Colour</span> — Qikink → My Products → the
+                  product → Variations. In “Black - S” the colour is <b>Black</b>.
+                </p>
+                <p>
+                  <span className="text-foreground">2 · Store SKU</span> — the <b>v-…</b> code of
+                  each size. Ignore the Product SKU (MRnHs-…), design name and cost.
+                </p>
+                <p>
+                  <span className="text-foreground">3 · Image</span> — 👁 on a row of that colour →
+                  right-click the picture → Copy image address. Then ADD, next colour, SAVE PRODUCT.
+                </p>
               </div>
 
               <ColourEntryForm
@@ -706,9 +633,43 @@ export function ProductsClient() {
                 existing={formColours}
                 live={form.status === "active"}
                 mergeExisting
-                startOpen={view === "edit"}
+                startOpen
                 onSubmit={addColourToForm}
               />
+
+              <details className="technical-border px-3 py-2">
+                <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                  Advanced · build an empty grid of sizes × colours and type SKUs row by row
+                </summary>
+                <div className="mt-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                  <MultiSelect
+                    id="grid-sizes"
+                    label="Sizes"
+                    options={SIZE_LADDER}
+                    value={splitList(gridSizes)}
+                    onChange={(next) => setGridSizes(next.join(", "))}
+                    placeholder="Pick sizes"
+                    keepOrder
+                    customHint="Add size"
+                  />
+                  <MultiSelect
+                    id="grid-colours"
+                    label="Colours (as named in Qikink)"
+                    options={COMMON_COLOURS}
+                    value={splitList(gridColors)}
+                    onChange={(next) => setGridColors(next.join(", "))}
+                    placeholder="Pick colours"
+                    customHint="Add colour"
+                  />
+                  <button
+                    type="button"
+                    onClick={buildGrid}
+                    className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all"
+                  >
+                    BUILD GRID
+                  </button>
+                </div>
+              </details>
 
               <div className="technical-border overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -737,7 +698,7 @@ export function ProductsClient() {
                           colSpan={8}
                           className="p-6 text-center font-mono text-[11px] text-muted-foreground"
                         >
-                          ENTER SIZES + COLOURS, THEN BUILD GRID
+                          ADD A COLOUR ABOVE — ITS SIZES AND STORE SKUS APPEAR HERE
                         </td>
                       </tr>
                     ) : (
