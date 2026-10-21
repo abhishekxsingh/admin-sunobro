@@ -79,3 +79,10 @@ BACKEND_URL=https://preflight-hdfabqd3apc5bjfu.centralindia-01.azurewebsites.net
 ADMIN_SESSION_COOKIE=sb_admin_session
 NEXT_PUBLIC_SITE_URL=http://localhost:3002
 ```
+
+## Design system (src/app/globals.css)
+
+- Fonts via `next/font` in `layout.tsx`: **Geist** (UI, `--font-sans`), **Geist Mono** (codes/SKUs/amounts, tabular figures, `--font-mono`), **Space Grotesk** (h1–h3, `--font-display`). `.font-mono.uppercase` labels render in Geist semibold.
+- Colour = meaning: `primary` indigo-violet (brand, links), `secondary` emerald (done/live/healthy), `tertiary` amber (needs attention), `destructive` coral (problem), `info` sky (shipped/information), `brand-pink` (gradient end). Light + dark tokens.
+- Utilities: `technical-border` (rounded card/input + hairline + soft shadow), `btn-primary` (the one gradient CTA style — use once per header), `text-gradient`, `bg-gradient-brand`. Badges are pills (`rounded-full`); status badges live in `components/status.tsx`.
+- Type scale floor is 10px; body text 12–14px. Sidebar groups: Overview / Sell / Operate / Admin.

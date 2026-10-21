@@ -64,10 +64,10 @@ export function QikinkExportPanel({
     <section className="mb-8 p-6 technical-border bg-surface-lowest space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-widest">
+          <p className="font-mono text-[12px] uppercase tracking-widest">
             Step 1 · Upload the Qikink export
           </p>
-          <p className="font-mono text-[10px] text-muted-foreground mt-1">
+          <p className="font-mono text-[11px] text-muted-foreground mt-1">
             dashboard.qikink.com → My Products → Export. Each Qikink product arrives here in review;
             then add its variations (step 2).
           </p>
@@ -83,7 +83,7 @@ export function QikinkExportPanel({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
+        <label className="bg-muted technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
           <Upload className="h-3.5 w-3.5" />
           {busy === "preview"
             ? "READING..."
@@ -100,13 +100,13 @@ export function QikinkExportPanel({
           />
         </label>
         {fileName && (
-          <span className="font-mono text-[11px] text-muted-foreground">{fileName}</span>
+          <span className="font-mono text-[12px] text-muted-foreground">{fileName}</span>
         )}
       </div>
 
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
       {result && result.problems.length > 0 && (
-        <ul className="p-4 technical-border border-destructive/40 bg-destructive/5 font-mono text-[11px] text-destructive list-disc pl-8 space-y-0.5">
+        <ul className="p-4 technical-border border-destructive/40 bg-destructive/5 font-mono text-[12px] text-destructive list-disc pl-8 space-y-0.5">
           {result.problems.map((p, i) => (
             <li key={i}>
               <span className="opacity-70">{p.where}:</span> {p.message}
@@ -129,7 +129,7 @@ export function QikinkExportPanel({
                   "Variants",
                   "Price",
                 ].map((h) => (
-                  <th key={h} className="p-2 font-mono text-[10px] text-muted-foreground uppercase">
+                  <th key={h} className="p-2 font-mono text-[11px] text-muted-foreground uppercase">
                     {h}
                   </th>
                 ))}
@@ -138,21 +138,21 @@ export function QikinkExportPanel({
             <tbody>
               {result.products.map((p) => (
                 <tr key={p.productId} className="border-b border-border/30 last:border-b-0">
-                  <td className="p-2 font-mono text-[10px] text-muted-foreground">{p.productId}</td>
+                  <td className="p-2 font-mono text-[11px] text-muted-foreground">{p.productId}</td>
                   <td className="p-2 text-sm">{p.name}</td>
-                  <td className="p-2 font-mono text-[10px]">
+                  <td className="p-2 font-mono text-[11px]">
                     {p.action === "create" ? "NEW · IN REVIEW" : "ALREADY HERE · UPDATE DETAILS"}
                   </td>
                   <td
-                    className="p-2 font-mono text-[10px] text-muted-foreground max-w-48 truncate"
+                    className="p-2 font-mono text-[11px] text-muted-foreground max-w-48 truncate"
                     title={p.design}
                   >
                     {p.design}
                   </td>
-                  <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                  <td className="p-2 font-mono text-[11px] text-muted-foreground">
                     {p.colourCount ?? "?"} × {p.sizeRange ?? "?"}
                   </td>
-                  <td className="p-2 font-mono text-[10px]">
+                  <td className="p-2 font-mono text-[11px]">
                     {p.variants}/{p.expectedVariants ?? "?"}
                   </td>
                   <td className="p-2 font-mono text-xs">₹{p.price}</td>
@@ -164,7 +164,7 @@ export function QikinkExportPanel({
       )}
 
       {result?.applied && (
-        <p className="font-mono text-[11px] text-secondary">
+        <p className="font-mono text-[12px] text-secondary">
           Done — {result.results?.filter((r) => r.action === "create").length ?? 0} new product(s)
           are in the IN REVIEW tab. Use ADD VARIATIONS on each to finish them.
         </p>
@@ -175,7 +175,7 @@ export function QikinkExportPanel({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground"
+            className="px-4 py-2 font-mono text-[12px] text-muted-foreground hover:text-foreground"
           >
             CANCEL
           </button>
@@ -183,7 +183,7 @@ export function QikinkExportPanel({
             type="button"
             onClick={() => file && void run(file, false)}
             disabled={busy !== null || result.problems.length > 0}
-            className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40 flex items-center gap-2"
+            className="btn-primary px-4 py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all disabled:opacity-40 flex items-center gap-2"
           >
             {busy === "apply" ? <Spinner /> : <Check className="h-3 w-3" aria-hidden />}
             {busy === "apply"

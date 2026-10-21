@@ -68,7 +68,7 @@ export function MultiSelect({
     <div ref={root} className="relative">
       <label
         htmlFor={triggerId}
-        className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+        className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
       >
         {label}
       </label>
@@ -86,7 +86,7 @@ export function MultiSelect({
           {value.map((v) => (
             <span
               key={v}
-              className="inline-flex items-center gap-1 bg-surface-container px-1.5 py-0.5 font-mono text-[11px] technical-border"
+              className="inline-flex items-center gap-1 bg-surface-container px-1.5 py-0.5 font-mono text-[12px] technical-border"
             >
               {v}
               <span
@@ -147,9 +147,7 @@ export function MultiSelect({
                   >
                     <span
                       className={`flex h-4 w-4 items-center justify-center border ${
-                        on
-                          ? "border-secondary bg-secondary text-secondary-foreground"
-                          : "border-border"
+                        on ? "border-secondary btn-primary" : "border-border"
                       }`}
                     >
                       {on && <Check className="h-3 w-3" />}
@@ -172,10 +170,10 @@ export function MultiSelect({
               </li>
             )}
             {shown.length === 0 && !canAdd && (
-              <li className="px-3 py-2 font-mono text-[11px] text-muted-foreground">No match.</li>
+              <li className="px-3 py-2 font-mono text-[12px] text-muted-foreground">No match.</li>
             )}
           </ul>
-          <div className="flex items-center justify-between border-t border-border/30 px-3 py-2 font-mono text-[10px]">
+          <div className="flex items-center justify-between border-t border-border/30 px-3 py-2 font-mono text-[11px]">
             <span className="text-muted-foreground">{value.length} selected</span>
             <span className="flex gap-3">
               <button
