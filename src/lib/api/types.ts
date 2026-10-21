@@ -40,6 +40,9 @@ export type QueueOrder = {
   ref: string;
   client: string;
   value: number;
+  customerId?: string | null;
+  email?: string | null;
+  phone?: string | null;
   subtotal?: number;
   discount?: number;
   couponCode?: string | null;
@@ -200,6 +203,9 @@ export type AdminOrder = {
   reference: string;
   status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
   client: string;
+  customerId?: string | null;
+  email?: string | null;
+  phone?: string | null;
   total: number;
   subtotal?: number;
   discount?: number;
@@ -320,4 +326,49 @@ export type CouponRedemption = {
   email: string | null;
   counted: boolean;
   createdAt: string;
+};
+
+export type AdminCustomer = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  avatarUrl?: string | null;
+  authMethod: "password" | "google" | "both";
+  addresses: {
+    id: string;
+    label: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    street: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    isDefault: boolean;
+  }[];
+  createdAt: string;
+  orders: number;
+  purchasedOrders: number;
+  totalSpent: number;
+  lastOrderAt: string | null;
+};
+
+export type AdminCustomerOrder = {
+  id: string;
+  reference: string;
+  status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
+  total: number;
+  discount: number;
+  couponCode: string | null;
+  currency: string;
+  createdAt: string;
+  items: { name: string; size: string; color: string; qty: number; sku: string }[];
+  qikinkOrderId: string | null;
+  city: string;
+};
+
+export type AdminCustomerDetail = Omit<AdminCustomer, "orders"> & {
+  orders: AdminCustomerOrder[];
 };

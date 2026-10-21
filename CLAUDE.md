@@ -20,9 +20,11 @@ src/
 │   ├── page.tsx                 redirects to /admin
 │   ├── admin/
 │   │   ├── page.tsx + AdminDashboardClient.tsx   stats cards + quick-nav
+│   │   ├── orders/      (search box → GET /admin/orders?q=&status= across ref, name, email, phone, product, SKU, colour, AWB, coupon, city/PIN; reads ?q= from the URL)
 │   │   ├── orders/      OrdersClient.tsx          order queue + SYNC_QIKINK + NEW ORDER; drawer loads full detail, PUSH_TO_QIKINK / SYNC_STATUS, cancel warning
 │   │   │                NewOrderPanel.tsx         admin-created orders: product/variant picker, shipping, prepaid vs COD, push now
 │   │   ├── team/        TeamClient.tsx — Team page (admin role only; ops see a locked notice): add member (name, email, role admin/ops, generated one-time password or own), credentials card with COPY LOGIN MESSAGE, inline role select, deactivate/reactivate, reset password, remove. Backend /admin/members
+│   │   ├── customers/   CustomersClient.tsx — search (name, email, phone, city, PIN), orders paid/all, spent, last order, sign-in method; expand → contact, saved addresses, every order (ref links to Orders ?q=). ?id= opens one (from the order drawer's VIEW CUSTOMER)
 │   │   ├── coupons/     CouponsClient.tsx (filters LIVE/SCHEDULED/ENDED, switch on/off, edit, delete, expand → orders that used it) + CouponForm.tsx (presets Festival / Seasonal / General / For customers, code generator, % or ₹, cap, min order, dates, total + per-customer limits, first order only, show at checkout, customer search picker)
 │   │   ├── products/    ProductsClient.tsx        product form (size × colour grid: Store SKU + colour image per row; ADD COLOUR block also adds missing sizes to an existing colour — saved with SAVE PRODUCT; status review/draft/active); PRODUCT SHEET download + IMPORT SHEET
 │   │   │                ProductCatalogTable.tsx   ALL / IN REVIEW / LIVE / DRAFT tabs, click-to-rename, PUBLISH/UNPUBLISH, expand → colours (image + on/off switch) → size chips (on/off)
