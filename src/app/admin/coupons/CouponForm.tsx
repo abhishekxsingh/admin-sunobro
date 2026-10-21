@@ -155,7 +155,7 @@ function Label({ htmlFor, children }: { htmlFor?: string; children: React.ReactN
   return (
     <label
       htmlFor={htmlFor}
-      className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+      className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
     >
       {children}
     </label>
@@ -226,18 +226,18 @@ function CustomerPicker({
               >
                 <UserRound className="h-3.5 w-3.5 text-muted-foreground" />
                 <span>{c.name}</span>
-                <span className="font-mono text-[10px] text-muted-foreground">
+                <span className="font-mono text-[11px] text-muted-foreground">
                   {c.email}
                   {c.phone ? ` · ${c.phone}` : ""}
                 </span>
-                {chosen.has(c.id) && <span className="ml-auto font-mono text-[10px]">ADDED</span>}
+                {chosen.has(c.id) && <span className="ml-auto font-mono text-[11px]">ADDED</span>}
               </button>
             </li>
           ))}
         </ul>
       )}
       {q.trim().length >= 2 && !searching && results.length === 0 && (
-        <p className="font-mono text-[10px] text-muted-foreground">No customer matches “{q}”.</p>
+        <p className="font-mono text-[11px] text-muted-foreground">No customer matches “{q}”.</p>
       )}
       <div className="flex flex-wrap gap-2">
         {selected.map((c) => (
@@ -248,7 +248,7 @@ function CustomerPicker({
             <UserRound className="h-3 w-3" />
             {c.name || c.id}
             {c.email && (
-              <span className="font-mono text-[10px] text-muted-foreground">{c.email}</span>
+              <span className="font-mono text-[11px] text-muted-foreground">{c.email}</span>
             )}
             <button
               type="button"
@@ -330,10 +330,10 @@ export function CouponForm({
     <form onSubmit={submit} className="mb-8 p-6 technical-border bg-surface-lowest space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-widest">
+          <p className="font-mono text-[12px] uppercase tracking-widest">
             {coupon ? `Edit ${coupon.code}` : "New coupon"}
           </p>
-          <p className="font-mono text-[11px] text-secondary mt-1">{preview(f)}</p>
+          <p className="font-mono text-[12px] text-secondary mt-1">{preview(f)}</p>
         </div>
         <button
           type="button"
@@ -367,7 +367,7 @@ export function CouponForm({
             <span className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Icon className="h-4 w-4" /> {label}
             </span>
-            <span className="mt-1 block font-mono text-[10px] text-muted-foreground">{hint}</span>
+            <span className="mt-1 block font-mono text-[11px] text-muted-foreground">{hint}</span>
           </button>
         ))}
       </div>
@@ -398,7 +398,7 @@ export function CouponForm({
             )}
           </div>
           {locked && (
-            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+            <p className="mt-1 font-mono text-[11px] text-muted-foreground">
               Used {coupon?.usedCount}× — the code can no longer change.
             </p>
           )}
@@ -447,7 +447,7 @@ export function CouponForm({
                 type="button"
                 aria-pressed={f.discountType === key}
                 onClick={() => set("discountType", key)}
-                className={`flex items-center gap-1.5 px-3 py-2 font-mono text-[11px] ${
+                className={`flex items-center gap-1.5 px-3 py-2 font-mono text-[12px] ${
                   f.discountType === key
                     ? "bg-secondary/20 text-secondary"
                     : "text-muted-foreground"
@@ -560,7 +560,7 @@ export function CouponForm({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[11px]">
+      <div className="flex flex-wrap gap-x-6 gap-y-2 font-mono text-[12px]">
         {f.kind !== "customer" && (
           <label className="flex items-center gap-2">
             <input
@@ -590,25 +590,25 @@ export function CouponForm({
         </label>
       </div>
       {f.kind === "customer" && (
-        <p className="font-mono text-[10px] text-muted-foreground -mt-3">
+        <p className="font-mono text-[11px] text-muted-foreground -mt-3">
           Customer coupons are always suggested to those customers when they are logged in (offer
           pop-up, product pages, checkout); other shoppers never see them.
         </p>
       )}
 
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
       <div className="flex justify-end gap-3">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground"
+          className="px-4 py-2 font-mono text-[12px] text-muted-foreground hover:text-foreground"
         >
           CANCEL
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+          className="btn-primary px-4 py-2 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
         >
           {saving ? <Spinner /> : <Save className="h-3 w-3" aria-hidden />}
           {saving ? "SAVING..." : coupon ? "SAVE COUPON" : "CREATE COUPON"}

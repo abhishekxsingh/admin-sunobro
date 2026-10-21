@@ -61,6 +61,14 @@ const DEMO_QUEUE: QueueOrder[] = [
   },
 ];
 
+// One colour per area, matching the stat cards.
+const QUICK_TONE: Record<string, string> = {
+  Orders: "bg-info/15 text-info",
+  Products: "bg-primary/15 text-primary",
+  Inventory: "bg-tertiary/15 text-tertiary",
+  Settings: "bg-brand-pink/15 text-brand-pink",
+};
+
 const INVENTORY_ICONS = [Shirt];
 
 const statusTone = (status: InventoryItem["status"]) =>
@@ -190,11 +198,11 @@ export function AdminDashboardClient() {
           <div className="flex flex-col md:flex-row justify-between md:items-end gap-6 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <p className="font-mono text-[11px] text-primary uppercase tracking-widest">
+                <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit">
                   System Telemetry
                 </p>
                 {isDemo && (
-                  <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
+                  <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
                     Demo Data — Backend Not Connected
                   </span>
                 )}
@@ -211,8 +219,10 @@ export function AdminDashboardClient() {
               transition={{ duration: 0.5 }}
               className="p-6 technical-border bg-surface-lowest hover:bg-surface-container transition-colors relative overflow-hidden"
             >
-              <Wallet className="absolute top-4 right-4 h-14 w-14 opacity-10" />
-              <p className="font-mono text-[11px] text-muted-foreground mb-4 uppercase tracking-tighter">
+              <span className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                <Wallet className="h-5 w-5" />
+              </span>
+              <p className="font-mono text-[12px] text-muted-foreground mb-4 uppercase tracking-tighter">
                 Gross Revenue (24H)
               </p>
               <div className="flex items-baseline gap-2">
@@ -224,8 +234,8 @@ export function AdminDashboardClient() {
                   {stats.revenueChangePct}%
                 </span>
               </div>
-              <div className="mt-6 h-1 w-full bg-border">
-                <div className="h-full bg-primary" style={{ width: "70%" }} />
+              <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-border/60">
+                <div className="h-full rounded-full bg-gradient-brand" style={{ width: "70%" }} />
               </div>
             </motion.div>
 
@@ -235,8 +245,10 @@ export function AdminDashboardClient() {
               transition={{ duration: 0.5, delay: 0.08 }}
               className="p-6 technical-border bg-surface-lowest hover:bg-surface-container transition-colors relative overflow-hidden"
             >
-              <ReceiptText className="absolute top-4 right-4 h-14 w-14 opacity-10" />
-              <p className="font-mono text-[11px] text-muted-foreground mb-4 uppercase tracking-tighter">
+              <span className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-xl bg-info/15 text-info">
+                <ReceiptText className="h-5 w-5" />
+              </span>
+              <p className="font-mono text-[12px] text-muted-foreground mb-4 uppercase tracking-tighter">
                 Active Orders
               </p>
               <div className="flex items-baseline gap-2">
@@ -245,7 +257,10 @@ export function AdminDashboardClient() {
               </div>
               <div className="mt-6 flex gap-1">
                 {[1, 1, 1, 0, 0].map((on, i) => (
-                  <div key={i} className={`h-1 flex-1 ${on ? "bg-secondary" : "bg-border"}`} />
+                  <div
+                    key={i}
+                    className={`h-1.5 flex-1 rounded-full ${on ? "bg-info" : "bg-border/60"}`}
+                  />
                 ))}
               </div>
             </motion.div>
@@ -256,8 +271,10 @@ export function AdminDashboardClient() {
               transition={{ duration: 0.5, delay: 0.16 }}
               className="p-6 technical-border bg-surface-lowest hover:bg-surface-container transition-colors relative overflow-hidden"
             >
-              <TrendingUp className="absolute top-4 right-4 h-14 w-14 opacity-10" />
-              <p className="font-mono text-[11px] text-muted-foreground mb-4 uppercase tracking-tighter">
+              <span className="absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/15 text-secondary">
+                <TrendingUp className="h-5 w-5" />
+              </span>
+              <p className="font-mono text-[12px] text-muted-foreground mb-4 uppercase tracking-tighter">
                 Conversion Rate
               </p>
               <div className="flex items-baseline gap-2">
@@ -279,7 +296,7 @@ export function AdminDashboardClient() {
 
         {/* Quick nav grid */}
         <section className="mb-10">
-          <p className="font-mono text-[11px] uppercase tracking-widest mb-4 px-1">Quick Access</p>
+          <p className="font-mono text-[12px] uppercase tracking-widest mb-4 px-1">Quick Access</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {QUICK_NAV.map(({ label, sub, href, icon: Icon, metric }) => (
               <Link
@@ -287,11 +304,15 @@ export function AdminDashboardClient() {
                 href={href}
                 className="technical-border bg-surface-lowest hover:bg-surface-container transition-colors p-6 group relative overflow-hidden flex flex-col gap-3"
               >
-                <Icon className="absolute top-3 right-3 h-12 w-12 opacity-10 group-hover:opacity-20 transition-opacity" />
-                <p className="font-mono text-[11px] uppercase tracking-wider">{label}</p>
+                <span
+                  className={`absolute top-5 right-5 flex h-10 w-10 items-center justify-center rounded-xl transition-transform group-hover:scale-110 ${QUICK_TONE[label] ?? "bg-primary/15 text-primary"}`}
+                >
+                  <Icon className="h-5 w-5" />
+                </span>
+                <p className="font-mono text-[12px] uppercase tracking-wider">{label}</p>
                 <p className="text-xs text-muted-foreground">{sub}</p>
                 <div className="flex items-center justify-between mt-auto">
-                  <span className="font-mono text-[10px] text-primary">{metric(stats)}</span>
+                  <span className="font-mono text-[11px] text-primary">{metric(stats)}</span>
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
                 </div>
               </Link>
@@ -303,17 +324,17 @@ export function AdminDashboardClient() {
           {/* Critical inventory summary */}
           <section className="lg:col-span-7">
             <div className="flex items-center justify-between mb-4 px-2">
-              <h3 className="font-mono text-[11px] uppercase tracking-widest">Critical Stock</h3>
+              <h3 className="font-mono text-[12px] uppercase tracking-widest">Critical Stock</h3>
               <Link
                 href="/admin/inventory"
-                className="font-mono text-[10px] text-primary hover:underline flex items-center gap-1"
+                className="font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
               >
                 VIEW ALL <ChevronRight className="h-3 w-3" />
               </Link>
             </div>
             <div className="technical-border bg-surface-lowest overflow-hidden">
               {criticalInventory.length === 0 && (
-                <p className="p-6 font-mono text-[11px] text-muted-foreground">
+                <p className="p-6 font-mono text-[12px] text-muted-foreground">
                   NO TRACKED STOCK RUNNING LOW — PRINT-ON-DEMAND ITEMS NEVER RUN OUT
                 </p>
               )}
@@ -337,7 +358,7 @@ export function AdminDashboardClient() {
                         <span className="text-xs text-muted-foreground">units</span>
                       </p>
                       <span
-                        className={`font-mono text-[10px] px-2 py-0.5 border ${statusTone(item.status)}`}
+                        className={`font-mono text-[11px] px-2 py-0.5 border rounded-full ${statusTone(item.status)}`}
                       >
                         {item.status}
                       </span>
@@ -351,10 +372,10 @@ export function AdminDashboardClient() {
           {/* Queue */}
           <section className="lg:col-span-5">
             <div className="flex items-center justify-between mb-4 px-2">
-              <h3 className="font-mono text-[11px] uppercase tracking-widest">Queue Protocol</h3>
+              <h3 className="font-mono text-[12px] uppercase tracking-widest">Queue Protocol</h3>
               <Link
                 href="/admin/orders"
-                className="font-mono text-[10px] text-primary hover:underline flex items-center gap-1"
+                className="font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
               >
                 VIEW ALL <ChevronRight className="h-3 w-3" />
               </Link>
@@ -370,7 +391,7 @@ export function AdminDashboardClient() {
                   <div className="flex justify-between items-start mb-3">
                     <span className="font-mono text-xs text-primary">{o.ref}</span>
                     <span
-                      className={`font-mono text-[10px] px-2 ${o.status === "pending" ? "bg-tertiary text-background" : "bg-secondary text-secondary-foreground"}`}
+                      className={`font-mono text-[11px] px-2 ${o.status === "pending" ? "bg-tertiary text-background" : "btn-primary"}`}
                     >
                       {o.status.toUpperCase()}
                     </span>

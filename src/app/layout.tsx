@@ -1,7 +1,22 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 
 import "./globals.css";
+
+// Self-hosted by next/font: no layout shift, no third-party request.
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist", display: "swap" });
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-space-grotesk",
+  display: "swap",
+});
 
 const OG_IMAGE = "/brand/logo-mark.png";
 
@@ -31,15 +46,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // The inline theme script sets the html class before hydration.
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;1,400&display=swap"
-        />
-      </head>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geist.variable} ${geistMono.variable} ${spaceGrotesk.variable}`}
+    >
       <body>
         <script
           dangerouslySetInnerHTML={{

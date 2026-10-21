@@ -43,7 +43,7 @@ function Avatar({ customer }: { customer: Pick<AdminCustomer, "name" | "avatarUr
       className="h-9 w-9 shrink-0 rounded-full object-cover"
     />
   ) : (
-    <div className="h-9 w-9 shrink-0 rounded-full bg-primary/20 flex items-center justify-center font-mono text-[11px] text-primary">
+    <div className="h-9 w-9 shrink-0 rounded-full bg-primary/20 flex items-center justify-center font-mono text-[12px] text-primary">
       {initials || "?"}
     </div>
   );
@@ -65,10 +65,10 @@ function CustomerDetail({ id }: { id: string }) {
       .catch((err) => setError(errorText(err, "Could not load this customer.")));
   }, [id]);
 
-  if (error) return <p className="font-mono text-[11px] text-destructive">{error}</p>;
+  if (error) return <p className="font-mono text-[12px] text-destructive">{error}</p>;
   if (!detail) {
     return (
-      <p className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+      <p className="flex items-center gap-2 font-mono text-[12px] text-muted-foreground">
         <Spinner /> LOADING…
       </p>
     );
@@ -76,7 +76,7 @@ function CustomerDetail({ id }: { id: string }) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_2fr]">
       <div className="space-y-3">
-        <p className="font-mono text-[11px] uppercase tracking-widest">Contact</p>
+        <p className="font-mono text-[12px] uppercase tracking-widest">Contact</p>
         <p className="flex items-center gap-2 text-sm">
           <Mail className="h-3.5 w-3.5 text-muted-foreground" />
           <a href={`mailto:${detail.email}`} className="hover:text-primary">
@@ -93,11 +93,11 @@ function CustomerDetail({ id }: { id: string }) {
             <span className="text-muted-foreground">no phone yet</span>
           )}
         </p>
-        <p className="font-mono text-[11px] uppercase tracking-widest pt-2">
+        <p className="font-mono text-[12px] uppercase tracking-widest pt-2">
           Saved addresses · {detail.addresses.length}
         </p>
         {detail.addresses.length === 0 && (
-          <p className="font-mono text-[10px] text-muted-foreground">None saved.</p>
+          <p className="font-mono text-[11px] text-muted-foreground">None saved.</p>
         )}
         {detail.addresses.map((a) => (
           <div key={a.id} className="flex gap-2 text-sm">
@@ -105,7 +105,7 @@ function CustomerDetail({ id }: { id: string }) {
             <div>
               <p>
                 {a.firstName} {a.lastName}
-                <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                   {a.label}
                   {a.isDefault ? " · default" : ""}
                 </span>
@@ -114,13 +114,13 @@ function CustomerDetail({ id }: { id: string }) {
                 {a.street}, {a.city}
                 {a.state ? `, ${a.state}` : ""} {a.postalCode}
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground">{a.phone}</p>
+              <p className="font-mono text-[11px] text-muted-foreground">{a.phone}</p>
             </div>
           </div>
         ))}
       </div>
       <div className="space-y-2">
-        <p className="font-mono text-[11px] uppercase tracking-widest">
+        <p className="font-mono text-[12px] uppercase tracking-widest">
           Orders · {detail.orders.length}
         </p>
         {detail.orders.length === 0 ? (
@@ -137,7 +137,7 @@ function CustomerDetail({ id }: { id: string }) {
                     >
                       {o.reference}
                     </Link>
-                    <p className="font-mono text-[10px] text-muted-foreground">
+                    <p className="font-mono text-[11px] text-muted-foreground">
                       {day(o.createdAt)}
                     </p>
                   </td>
@@ -145,7 +145,7 @@ function CustomerDetail({ id }: { id: string }) {
                     {o.items.map((i, n) => (
                       <p key={n}>
                         {i.name}{" "}
-                        <span className="font-mono text-[10px] text-muted-foreground">
+                        <span className="font-mono text-[11px] text-muted-foreground">
                           {i.color} / {i.size} × {i.qty}
                         </span>
                       </p>
@@ -157,7 +157,7 @@ function CustomerDetail({ id }: { id: string }) {
                   <td className="py-2 font-mono text-xs whitespace-nowrap">
                     {money(o.total)}
                     {o.couponCode && (
-                      <span className="block text-[10px] text-secondary">{o.couponCode}</span>
+                      <span className="block text-[11px] text-secondary">{o.couponCode}</span>
                     )}
                   </td>
                 </tr>
@@ -231,11 +231,11 @@ export function CustomersClient() {
       />
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-8">
-          <p className="font-mono text-[11px] text-primary uppercase tracking-widest mb-2">
+          <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit mb-2">
             People
           </p>
           <h2 className="text-4xl font-bold">Customers</h2>
-          <p className="font-mono text-[10px] text-muted-foreground mt-1">
+          <p className="font-mono text-[11px] text-muted-foreground mt-1">
             {customers
               ? `${customers.length}${customers.length === 100 ? "+" : ""} ${query.trim() ? "MATCHING" : "SHOWN"} · NEWEST FIRST`
               : "ACCOUNTS THAT SIGNED UP OR SIGNED IN WITH GOOGLE"}
@@ -277,7 +277,7 @@ export function CustomersClient() {
                 ].map((h, i) => (
                   <th
                     key={h || i}
-                    className="p-4 font-mono text-[11px] text-muted-foreground uppercase"
+                    className="p-4 font-mono text-[12px] text-muted-foreground uppercase"
                   >
                     {h}
                   </th>
@@ -334,28 +334,28 @@ export function CustomersClient() {
                             <Avatar customer={c} />
                             <div>
                               <p className="text-sm font-medium">{c.name}</p>
-                              <p className="font-mono text-[10px] text-muted-foreground">
+                              <p className="font-mono text-[11px] text-muted-foreground">
                                 {c.email}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 font-mono text-[11px]">
+                        <td className="p-4 font-mono text-[12px]">
                           {c.phone || <span className="text-muted-foreground">—</span>}
                         </td>
-                        <td className="p-4 font-mono text-[10px] text-muted-foreground">
+                        <td className="p-4 font-mono text-[11px] text-muted-foreground">
                           {SIGN_IN[c.authMethod]}
                         </td>
-                        <td className="p-4 font-mono text-[11px]">
+                        <td className="p-4 font-mono text-[12px]">
                           {c.purchasedOrders}
                           <span className="text-muted-foreground"> / {c.orders}</span>
-                          <p className="text-[10px] text-muted-foreground">paid / all</p>
+                          <p className="text-[11px] text-muted-foreground">paid / all</p>
                         </td>
                         <td className="p-4 font-mono text-sm">{money(c.totalSpent)}</td>
-                        <td className="p-4 font-mono text-[11px] text-muted-foreground">
+                        <td className="p-4 font-mono text-[12px] text-muted-foreground">
                           {day(c.lastOrderAt)}
                         </td>
-                        <td className="p-4 font-mono text-[11px] text-muted-foreground">
+                        <td className="p-4 font-mono text-[12px] text-muted-foreground">
                           {day(c.createdAt)}
                         </td>
                       </tr>
@@ -374,7 +374,7 @@ export function CustomersClient() {
             </tbody>
           </table>
         </div>
-        <p className="mt-4 font-mono text-[10px] text-muted-foreground">
+        <p className="mt-4 font-mono text-[11px] text-muted-foreground">
           Orders placed before accounts were required (guest checkout) don&apos;t belong to a
           customer — find them in Orders by email or phone.
         </p>

@@ -106,10 +106,10 @@ function Redemptions({ coupon }: { coupon: Coupon }) {
       .catch((err) => setError(errorText(err, "Could not load orders.")));
   }, [coupon.id]);
 
-  if (error) return <p className="font-mono text-[11px] text-destructive">{error}</p>;
+  if (error) return <p className="font-mono text-[12px] text-destructive">{error}</p>;
   if (!rows) {
     return (
-      <p className="font-mono text-[11px] text-muted-foreground flex items-center gap-2">
+      <p className="font-mono text-[12px] text-muted-foreground flex items-center gap-2">
         <Spinner /> LOADING ORDERS…
       </p>
     );
@@ -120,7 +120,7 @@ function Redemptions({ coupon }: { coupon: Coupon }) {
   const saved = rows.filter((r) => r.counted).reduce((s, r) => s + r.discount, 0);
   return (
     <div className="space-y-2">
-      <p className="font-mono text-[10px] text-muted-foreground">
+      <p className="font-mono text-[11px] text-muted-foreground">
         {rows.filter((r) => r.counted).length} redeemed · {money(saved)} given as discount · unpaid
         and cancelled orders don&apos;t count
       </p>
@@ -132,7 +132,7 @@ function Redemptions({ coupon }: { coupon: Coupon }) {
               <td className="py-1.5 pr-4 text-sm">
                 {r.client}
                 {r.email && (
-                  <span className="ml-2 font-mono text-[10px] text-muted-foreground">
+                  <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                     {r.email}
                   </span>
                 )}
@@ -143,7 +143,7 @@ function Redemptions({ coupon }: { coupon: Coupon }) {
               <td className="py-1.5 pr-4 font-mono text-xs">
                 −{money(r.discount)} → {money(r.total)}
               </td>
-              <td className="py-1.5 font-mono text-[10px] text-muted-foreground">
+              <td className="py-1.5 font-mono text-[11px] text-muted-foreground">
                 {new Date(r.createdAt).toLocaleString("en-IN")}
               </td>
             </tr>
@@ -246,13 +246,13 @@ export function CouponsClient() {
 
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
-          <p className="font-mono text-[11px] text-primary uppercase tracking-widest mb-2">
+          <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit mb-2">
             Promotions
           </p>
           <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
             <div>
               <h2 className="text-4xl font-bold">Coupons</h2>
-              <p className="font-mono text-[10px] text-muted-foreground mt-1">
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">
                 {(coupons || []).length} COUPON{(coupons || []).length === 1 ? "" : "S"} · {live}{" "}
                 LIVE
                 {scheduled ? ` · ${scheduled} SCHEDULED` : ""}
@@ -261,7 +261,7 @@ export function CouponsClient() {
             <button
               type="button"
               onClick={() => setEditing("new")}
-              className="bg-foreground text-background px-4 py-2 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90"
+              className="btn-primary px-4 py-2 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90"
             >
               <Plus className="h-3.5 w-3.5" /> NEW COUPON
             </button>
@@ -271,11 +271,11 @@ export function CouponsClient() {
         <section className="mb-8 grid gap-3 md:grid-cols-4">
           {KINDS.map(({ key, label, hint, icon: Icon }) => (
             <div key={key} className="p-4 technical-border bg-surface-lowest">
-              <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest">
+              <p className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-widest">
                 <Icon className="h-3.5 w-3.5" /> {label}
               </p>
-              <p className="mt-1 font-mono text-[10px] text-muted-foreground">{hint}</p>
-              <p className="mt-2 font-mono text-[11px]">
+              <p className="mt-1 font-mono text-[11px] text-muted-foreground">{hint}</p>
+              <p className="mt-2 font-mono text-[12px]">
                 {(coupons || []).filter((c) => c.kind === key && c.state === "live").length} live
               </p>
             </div>
@@ -301,7 +301,7 @@ export function CouponsClient() {
               role="tab"
               aria-selected={filter === key}
               onClick={() => setFilter(key)}
-              className={`font-mono text-[11px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
+              className={`font-mono text-[12px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
                 filter === key
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -321,7 +321,7 @@ export function CouponsClient() {
                   (h, i) => (
                     <th
                       key={h || i}
-                      className="p-4 font-mono text-[11px] text-muted-foreground uppercase"
+                      className="p-4 font-mono text-[12px] text-muted-foreground uppercase"
                     >
                       {h}
                     </th>
@@ -388,19 +388,19 @@ export function CouponsClient() {
                           {c.name && <p className="text-xs text-muted-foreground">{c.name}</p>}
                         </td>
                         <td className="p-4">
-                          <span className="inline-flex items-center gap-1.5 font-mono text-[11px]">
+                          <span className="inline-flex items-center gap-1.5 font-mono text-[12px]">
                             <KindIcon className="h-3.5 w-3.5" /> {kind.label.toUpperCase()}
                           </span>
                           {c.kind === "customer" && (
                             <p
-                              className="mt-0.5 max-w-48 truncate font-mono text-[10px] text-muted-foreground"
+                              className="mt-0.5 max-w-48 truncate font-mono text-[11px] text-muted-foreground"
                               title={c.customers.map((x) => x.email || x.id).join(", ")}
                             >
                               {c.customers.map((x) => x.name || x.email || x.id).join(", ")}
                             </p>
                           )}
                           {c.showAtCheckout && c.kind !== "customer" && (
-                            <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
+                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
                               suggested on website
                             </p>
                           )}
@@ -408,18 +408,18 @@ export function CouponsClient() {
                         <td className="p-4 text-sm max-w-56">
                           {c.summary}
                           {c.firstOrderOnly && (
-                            <p className="font-mono text-[10px] text-muted-foreground">
+                            <p className="font-mono text-[11px] text-muted-foreground">
                               first order only
                             </p>
                           )}
                         </td>
-                        <td className="p-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                        <td className="p-4 font-mono text-[12px] text-muted-foreground whitespace-nowrap">
                           {date(c.startsAt) || "now"}
                           <br />→ {date(c.endsAt) || "no end"}
                         </td>
-                        <td className="p-4 font-mono text-[11px]">
+                        <td className="p-4 font-mono text-[12px]">
                           {c.usedCount}/{c.usageLimit ?? "∞"}
-                          <p className="text-[10px] text-muted-foreground">
+                          <p className="text-[11px] text-muted-foreground">
                             {c.perCustomerLimit
                               ? `${c.perCustomerLimit} per customer`
                               : "no per-customer limit"}
@@ -427,7 +427,7 @@ export function CouponsClient() {
                         </td>
                         <td className="p-4">
                           <span
-                            className={`inline-flex items-center gap-1 whitespace-nowrap font-mono text-[10px] px-2 py-0.5 border ${state.className}`}
+                            className={`inline-flex items-center gap-1 whitespace-nowrap font-mono text-[11px] px-2 py-0.5 border rounded-full ${state.className}`}
                           >
                             <StateIcon className="h-3 w-3" aria-hidden /> {state.label}
                           </span>
@@ -438,7 +438,7 @@ export function CouponsClient() {
                               type="button"
                               onClick={() => void toggleActive(c)}
                               disabled={busyId === c.id}
-                              className={`inline-flex items-center gap-1 font-mono text-[11px] hover:underline disabled:opacity-50 ${
+                              className={`inline-flex items-center gap-1 font-mono text-[12px] hover:underline disabled:opacity-50 ${
                                 c.active ? "text-muted-foreground" : "font-bold text-secondary"
                               }`}
                             >
@@ -454,7 +454,7 @@ export function CouponsClient() {
                             <button
                               type="button"
                               onClick={() => setEditing(c)}
-                              className="inline-flex items-center gap-1 font-mono text-[11px] text-primary hover:underline"
+                              className="inline-flex items-center gap-1 font-mono text-[12px] text-primary hover:underline"
                             >
                               <SquarePen className="h-3 w-3" /> EDIT
                             </button>
@@ -462,13 +462,13 @@ export function CouponsClient() {
                               type="button"
                               onClick={() => void remove(c)}
                               disabled={busyId === c.id}
-                              className="inline-flex items-center gap-1 font-mono text-[11px] text-destructive hover:underline disabled:opacity-50"
+                              className="inline-flex items-center gap-1 font-mono text-[12px] text-destructive hover:underline disabled:opacity-50"
                             >
                               <Trash2 className="h-3 w-3" /> DELETE
                             </button>
                           </div>
                           {rowError?.id === c.id && (
-                            <p className="mt-2 max-w-xs font-mono text-[10px] text-destructive">
+                            <p className="mt-2 max-w-xs font-mono text-[11px] text-destructive">
                               {rowError.message}
                             </p>
                           )}

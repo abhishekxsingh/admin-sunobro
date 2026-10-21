@@ -107,11 +107,11 @@ export function InventoryClient() {
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
           <div className="flex items-center gap-3 mb-2">
-            <p className="font-mono text-[11px] text-primary uppercase tracking-widest">
+            <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit">
               System Inventory
             </p>
             {isDemo && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
                 Demo Data
               </span>
             )}
@@ -121,7 +121,7 @@ export function InventoryClient() {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2 disabled:opacity-50"
+              className="bg-muted technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all flex items-center gap-2 disabled:opacity-50"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
               {refreshing ? "REFRESHING..." : "REFRESH"}
@@ -137,7 +137,7 @@ export function InventoryClient() {
             { label: "Low Stock", value: low, color: "text-destructive" },
           ].map(({ label, value, color }) => (
             <div key={label} className="technical-border bg-surface-lowest p-4">
-              <p className="font-mono text-[11px] text-muted-foreground uppercase mb-2">{label}</p>
+              <p className="font-mono text-[12px] text-muted-foreground uppercase mb-2">{label}</p>
               <p className={`text-3xl font-bold ${color}`}>{value}</p>
             </div>
           ))}
@@ -149,7 +149,7 @@ export function InventoryClient() {
             <button
               key={s}
               onClick={() => setSortBy(s)}
-              className={`font-mono text-[11px] px-3 py-1.5 border transition-all ${
+              className={`font-mono text-[12px] px-3 py-1.5 border transition-all ${
                 sortBy === s
                   ? "bg-primary text-primary-foreground border-primary"
                   : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -165,13 +165,13 @@ export function InventoryClient() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border/30 bg-muted/30">
-                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
+                <th className="p-4 font-mono text-[12px] text-muted-foreground uppercase">
                   SKU / Product
                 </th>
-                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-right">
+                <th className="p-4 font-mono text-[12px] text-muted-foreground uppercase text-right">
                   Stock Level
                 </th>
-                <th className="p-4 font-mono text-[11px] text-muted-foreground uppercase text-center">
+                <th className="p-4 font-mono text-[12px] text-muted-foreground uppercase text-center">
                   Status
                 </th>
               </tr>
@@ -193,7 +193,7 @@ export function InventoryClient() {
                           <p className="font-mono text-sm">{item.sku}</p>
                           <p className="text-xs text-muted-foreground">{item.name}</p>
                           <p
-                            className={`font-mono text-[10px] ${item.qikinkSku ? "text-muted-foreground" : "text-destructive"}`}
+                            className={`font-mono text-[11px] ${item.qikinkSku ? "text-muted-foreground" : "text-destructive"}`}
                           >
                             QIKINK: {item.qikinkSku || "NOT MAPPED"}
                           </p>
@@ -212,7 +212,7 @@ export function InventoryClient() {
                     </td>
                     <td className="p-4 text-center">
                       <span
-                        className={`font-mono text-[10px] px-2 py-0.5 border ${statusTone(item.status)}`}
+                        className={`font-mono text-[11px] px-2 py-0.5 border rounded-full ${statusTone(item.status)}`}
                       >
                         {item.status}
                       </span>

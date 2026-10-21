@@ -125,7 +125,7 @@ export function NewOrderPanel({
   return (
     <form onSubmit={handleSubmit} className="mb-8 p-6 technical-border bg-surface-lowest space-y-6">
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-widest">New Order</p>
+        <p className="font-mono text-[12px] uppercase tracking-widest">New Order</p>
         <button
           type="button"
           onClick={onClose}
@@ -137,7 +137,7 @@ export function NewOrderPanel({
 
       {/* Items */}
       <div className="space-y-2">
-        <p className="font-mono text-[10px] text-muted-foreground uppercase">Items</p>
+        <p className="font-mono text-[11px] text-muted-foreground uppercase">Items</p>
         {lines.map((line, i) => {
           const variants = variantsByProduct[line.productId] || [];
           return (
@@ -197,7 +197,7 @@ export function NewOrderPanel({
         <button
           type="button"
           onClick={() => setLines((rows) => [...rows, { productId: "", sku: "", qty: 1 }])}
-          className="font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
+          className="font-mono text-[12px] text-primary hover:underline flex items-center gap-1"
         >
           <Plus className="h-3 w-3" /> ADD ITEM
         </button>
@@ -207,7 +207,7 @@ export function NewOrderPanel({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {SHIPPING_FIELDS.map(({ key, label, required }) => (
           <div key={key} className={key === "street" ? "md:col-span-3" : ""}>
-            <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+            <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
               {label}
             </label>
             <input
@@ -223,7 +223,7 @@ export function NewOrderPanel({
       {/* Payment + Qikink */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase mb-2">Payment</p>
+          <p className="font-mono text-[11px] text-muted-foreground uppercase mb-2">Payment</p>
           <div className="flex gap-2">
             {(
               [
@@ -235,7 +235,7 @@ export function NewOrderPanel({
                 key={value}
                 type="button"
                 onClick={() => setPaymentMethod(value)}
-                className={`px-3 py-2 font-mono text-[11px] technical-border ${
+                className={`px-3 py-2 font-mono text-[12px] technical-border ${
                   paymentMethod === value
                     ? "bg-secondary/20 text-secondary border-secondary/40"
                     : "text-muted-foreground"
@@ -245,14 +245,14 @@ export function NewOrderPanel({
               </button>
             ))}
           </div>
-          <p className="font-mono text-[10px] text-muted-foreground mt-1">
+          <p className="font-mono text-[11px] text-muted-foreground mt-1">
             {paymentMethod === "cod"
               ? "Order stays PENDING; Qikink collects cash on delivery."
               : "Order is marked PAID — use when money was already received (UPI, bank)."}
           </p>
         </div>
         <div className="space-y-2">
-          <label className="flex items-center gap-2 font-mono text-[11px]">
+          <label className="flex items-center gap-2 font-mono text-[12px]">
             <input
               type="checkbox"
               checked={pushToQikink}
@@ -277,21 +277,21 @@ export function NewOrderPanel({
       </div>
 
       {unmappedLine && pushToQikink && (
-        <p className="font-mono text-[11px] text-destructive">
+        <p className="font-mono text-[12px] text-destructive">
           A selected variant has no Qikink SKU — the push will fail until it is mapped in Products.
         </p>
       )}
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
 
       <div className="flex items-center justify-between">
         <p className="font-mono text-sm">
           Est. total: <span className="font-bold">₹{estimatedTotal.toLocaleString("en-IN")}</span>
-          <span className="text-[10px] text-muted-foreground"> (server re-prices)</span>
+          <span className="text-[11px] text-muted-foreground"> (server re-prices)</span>
         </p>
         <button
           type="submit"
           disabled={saving}
-          className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+          className="btn-primary px-4 py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
         >
           {saving ? "CREATING..." : pushToQikink ? "CREATE + PUSH" : "CREATE ORDER"}
         </button>

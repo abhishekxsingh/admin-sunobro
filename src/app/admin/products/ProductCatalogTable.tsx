@@ -39,7 +39,7 @@ const TABS: [Filter, string, LucideIcon][] = [
 ];
 
 const action =
-  "inline-flex items-center gap-1 font-mono text-[11px] hover:underline disabled:opacity-50";
+  "inline-flex items-center gap-1 font-mono text-[12px] hover:underline disabled:opacity-50";
 
 const money = (n: number, cur = "INR") =>
   `${cur === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
@@ -155,7 +155,7 @@ function ProductOptions({
 
   if (!variants) {
     return (
-      <p className="font-mono text-[11px] text-muted-foreground">
+      <p className="font-mono text-[12px] text-muted-foreground">
         {error || "LOADING COLOURS + SIZES…"}
       </p>
     );
@@ -163,12 +163,12 @@ function ProductOptions({
 
   return (
     <div className="space-y-3">
-      <p className="font-mono text-[10px] text-muted-foreground">
+      <p className="font-mono text-[11px] text-muted-foreground">
         {colours.length === 0
           ? "No colours yet — add each colour with its sizes and Store SKUs below."
           : "Click a size to switch it off or on, the image to change it, + SIZE to add one. Switched-off options disappear from the website."}
       </p>
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {colours.map(([color, rows]) => {
           const anyOn = rows.some((v) => v.enabled !== false);
@@ -193,7 +193,7 @@ function ProductOptions({
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{color}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground">
+                  <p className="font-mono text-[11px] text-muted-foreground">
                     {rows.filter((v) => v.enabled !== false).length}/{rows.length} sizes on
                   </p>
                 </div>
@@ -224,7 +224,7 @@ function ProductOptions({
                       title={v.qikinkSku ? `Store SKU ${v.qikinkSku}` : "No Qikink Store SKU"}
                       disabled={busy !== null}
                       onClick={() => void toggle(color, v.size, !on)}
-                      className={`px-2.5 py-1 font-mono text-[11px] border transition-all disabled:opacity-50 ${
+                      className={`px-2.5 py-1 font-mono text-[12px] border transition-all disabled:opacity-50 ${
                         on
                           ? "border-secondary/50 text-foreground"
                           : "border-border/40 text-muted-foreground line-through"
@@ -337,7 +337,7 @@ export function ProductCatalogTable({
             role="tab"
             aria-selected={filter === key}
             onClick={() => setFilter(key)}
-            className={`font-mono text-[11px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
+            className={`font-mono text-[12px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
               filter === key
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -356,7 +356,7 @@ export function ProductCatalogTable({
               {["", "Product", "Status", "Price", "Colours", "Qikink", "Actions"].map((h, i) => (
                 <th
                   key={h || i}
-                  className="p-4 font-mono text-[11px] text-muted-foreground uppercase"
+                  className="p-4 font-mono text-[12px] text-muted-foreground uppercase"
                 >
                   {h}
                 </th>
@@ -431,7 +431,7 @@ export function ProductCatalogTable({
                                 <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-60" />
                               </button>
                             )}
-                            <p className="font-mono text-[10px] text-muted-foreground">
+                            <p className="font-mono text-[11px] text-muted-foreground">
                               /products/{product.slug}
                             </p>
                             <QikinkIdentity product={product} />
@@ -444,7 +444,7 @@ export function ProductCatalogTable({
                       <td className="p-4 font-mono text-sm">
                         {money(product.price, product.currency)}
                       </td>
-                      <td className="p-4 font-mono text-[11px] text-muted-foreground">
+                      <td className="p-4 font-mono text-[12px] text-muted-foreground">
                         {product.variantCount === 0 ? (
                           <span className="text-tertiary">
                             0/{product.qikink?.expectedVariants ?? "?"} · add variations
@@ -463,7 +463,7 @@ export function ProductCatalogTable({
                       </td>
                       <td className="p-4">
                         {product.variantCount === 0 ? (
-                          <span className="font-mono text-[10px] px-2 py-0.5 border border-border/40 text-muted-foreground">
+                          <span className="font-mono text-[11px] px-2 py-0.5 border rounded-full border-border/40 text-muted-foreground">
                             NO VARIANTS
                           </span>
                         ) : (
@@ -473,7 +473,7 @@ export function ProductCatalogTable({
                                 ? "Every switched-on option has a Qikink Store SKU"
                                 : "Some switched-on options have no Qikink Store SKU — they can't be printed"
                             }
-                            className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 border ${
+                            className={`inline-flex items-center gap-1 font-mono text-[11px] px-2 py-0.5 border rounded-full ${
                               mappedOk
                                 ? "bg-secondary/10 text-secondary border-secondary/20"
                                 : "bg-destructive/10 text-destructive border-destructive/20"
@@ -543,7 +543,7 @@ export function ProductCatalogTable({
                           </button>
                         </div>
                         {rowError?.id === product.id && (
-                          <p className="mt-2 max-w-xs font-mono text-[10px] text-destructive">
+                          <p className="mt-2 max-w-xs font-mono text-[11px] text-destructive">
                             {rowError.message}
                           </p>
                         )}

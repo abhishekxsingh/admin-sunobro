@@ -116,7 +116,7 @@ export function ProfileClient() {
 
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
-          <p className="font-mono text-[11px] text-primary uppercase tracking-widest mb-2">
+          <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit mb-2">
             Admin Profile
           </p>
           <h2 className="text-4xl font-bold">Identity</h2>
@@ -132,18 +132,18 @@ export function ProfileClient() {
               <div>
                 <p className="text-lg font-bold">{adminUser?.name || "—"}</p>
                 <p className="text-sm text-muted-foreground">{adminUser?.email || "—"}</p>
-                <span className="font-mono text-[10px] px-2 py-0.5 border border-primary/30 bg-primary/10 text-primary">
+                <span className="font-mono text-[11px] px-2 py-0.5 border rounded-full border-primary/30 bg-primary/10 text-primary">
                   {adminUser?.role?.toUpperCase() || "ADMIN"}
                 </span>
               </div>
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
-              <p className="font-mono text-[11px] uppercase tracking-widest border-t border-border/30 pt-4">
+              <p className="font-mono text-[12px] uppercase tracking-widest border-t border-border/30 pt-4">
                 Edit Identity
               </p>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Name
                 </label>
                 <input
@@ -153,7 +153,7 @@ export function ProfileClient() {
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Email
                 </label>
                 <input
@@ -165,7 +165,7 @@ export function ProfileClient() {
               </div>
               {saveStatus && (
                 <p
-                  className={`font-mono text-[11px] ${saveStatus.error ? "text-destructive" : "text-secondary"}`}
+                  className={`font-mono text-[12px] ${saveStatus.error ? "text-destructive" : "text-secondary"}`}
                 >
                   {saveStatus.message}
                 </p>
@@ -173,7 +173,7 @@ export function ProfileClient() {
               <button
                 type="submit"
                 disabled={saving}
-                className="w-full bg-secondary text-secondary-foreground py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                className="w-full btn-primary py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
               >
                 {saving ? "SAVING..." : "SAVE CHANGES"}
               </button>
@@ -182,7 +182,7 @@ export function ProfileClient() {
 
           {/* Security */}
           <section className="technical-border bg-surface-lowest p-6 space-y-4">
-            <p className="font-mono text-[11px] uppercase tracking-widest">Security</p>
+            <p className="font-mono text-[12px] uppercase tracking-widest">Security</p>
 
             <form onSubmit={handleChangePassword} className="space-y-4">
               {[
@@ -191,7 +191,7 @@ export function ProfileClient() {
                 { label: "Confirm New Password", value: confirmPassword, set: setConfirmPassword },
               ].map(({ label, value, set }) => (
                 <div key={label}>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                  <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                     {label}
                   </label>
                   <input
@@ -206,7 +206,7 @@ export function ProfileClient() {
 
               {passwordStatus && (
                 <p
-                  className={`font-mono text-[11px] ${passwordStatus.error ? "text-destructive" : "text-secondary"}`}
+                  className={`font-mono text-[12px] ${passwordStatus.error ? "text-destructive" : "text-secondary"}`}
                 >
                   {passwordStatus.message}
                 </p>
@@ -215,12 +215,12 @@ export function ProfileClient() {
               <button
                 type="submit"
                 disabled={changingPassword}
-                className="w-full bg-muted technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+                className="w-full bg-muted technical-border py-2 font-mono text-[12px] hover:border-foreground transition-all disabled:opacity-50"
               >
                 {changingPassword ? "CHANGING..." : "CHANGE PASSWORD"}
               </button>
 
-              <p className="font-mono text-[10px] text-muted-foreground">
+              <p className="font-mono text-[11px] text-muted-foreground">
                 [PUT /admin/profile/password — not wired yet]
               </p>
             </form>
