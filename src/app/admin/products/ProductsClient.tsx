@@ -11,7 +11,14 @@ import { SheetImportPanel } from "./SheetImportPanel";
 import { QikinkExportPanel } from "./QikinkExportPanel";
 import { ProductCatalogTable } from "./ProductCatalogTable";
 import { Spinner } from "@/components/status";
-import { ColourEntryForm, SIZE_LADDER, sizesFor, type ColourEntry } from "./ColourEditors";
+import {
+  COMMON_COLOURS,
+  ColourEntryForm,
+  SIZE_LADDER,
+  sizesFor,
+  type ColourEntry,
+} from "./ColourEditors";
+import { MultiSelect } from "@/components/multi-select";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
   {
@@ -631,26 +638,25 @@ export function ProductsClient() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Sizes
-                  </label>
-                  <input
-                    value={gridSizes}
-                    onChange={(e) => setGridSizes(e.target.value)}
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
-                <div>
-                  <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
-                    Colours
-                  </label>
-                  <input
-                    value={gridColors}
-                    onChange={(e) => setGridColors(e.target.value)}
-                    className="w-full bg-muted px-3 py-2 text-sm technical-border"
-                  />
-                </div>
+                <MultiSelect
+                  id="grid-sizes"
+                  label="Sizes"
+                  options={SIZE_LADDER}
+                  value={splitList(gridSizes)}
+                  onChange={(next) => setGridSizes(next.join(", "))}
+                  placeholder="Pick sizes"
+                  keepOrder
+                  customHint="Add size"
+                />
+                <MultiSelect
+                  id="grid-colours"
+                  label="Colours (as named in Qikink)"
+                  options={COMMON_COLOURS}
+                  value={splitList(gridColors)}
+                  onChange={(next) => setGridColors(next.join(", "))}
+                  placeholder="Pick colours"
+                  customHint="Add colour"
+                />
                 <button
                   type="button"
                   onClick={buildGrid}
