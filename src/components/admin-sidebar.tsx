@@ -11,13 +11,14 @@ import {
   Shirt,
   Sun,
   TicketPercent,
+  UsersRound,
   Warehouse,
 } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { useTheme } from "@/hooks/use-theme";
 
 export type AdminSidebarPage =
-  "dashboard" | "orders" | "products" | "inventory" | "coupons" | "settings" | "profile";
+  "dashboard" | "orders" | "products" | "inventory" | "coupons" | "team" | "settings" | "profile";
 
 type NavItem = {
   label: string;
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Products", href: "/admin/products", page: "products", icon: Shirt },
   { label: "Inventory", href: "/admin/inventory", page: "inventory", icon: Warehouse },
   { label: "Coupons", href: "/admin/coupons", page: "coupons", icon: TicketPercent },
+  { label: "Team", href: "/admin/team", page: "team", icon: UsersRound },
   { label: "Settings", href: "/admin/settings", page: "settings", icon: Settings },
   { label: "Profile", href: "/admin/profile", page: "profile", icon: CircleUser },
 ];

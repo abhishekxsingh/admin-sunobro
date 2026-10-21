@@ -1,5 +1,7 @@
 import { api } from "./client";
 import type {
+  TeamCredentials,
+  TeamMember,
   Coupon,
   CouponCustomer,
   CouponPayload,
@@ -103,4 +105,14 @@ export const adminCouponsApi = {
   redemptions: (id: string) => api.get<CouponRedemption[]>(`/admin/coupons/${id}/redemptions`),
   searchCustomers: (q: string) =>
     api.get<CouponCustomer[]>(`/admin/customers/search?q=${encodeURIComponent(q)}`),
+};
+
+export const adminMembersApi = {
+  list: () => api.get<TeamMember[]>("/admin/members"),
+  create: (payload: { name: string; email: string; role: "admin" | "ops"; password?: string }) =>
+    api.post<TeamCredentials>("/admin/members", payload),
+  update: (id: string, payload: { name?: string; role?: "admin" | "ops"; active?: boolean }) =>
+    api.put<TeamMember>(`/admin/members/${id}`, payload),
+  resetPassword: (id: string) => api.post<TeamCredentials>(`/admin/members/${id}/reset-password`),
+  remove: (id: string) => api.delete<void>(`/admin/members/${id}`),
 };

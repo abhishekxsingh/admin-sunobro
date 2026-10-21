@@ -3,7 +3,14 @@ export type AdminUser = {
   name: string;
   email: string;
   role: "admin" | "ops";
+  active?: boolean;
+  lastLoginAt?: string | null;
+  createdAt?: string | null;
 };
+
+export type TeamMember = AdminUser & { active: boolean; isYou: boolean };
+
+export type TeamCredentials = { member: TeamMember; temporaryPassword: string | null };
 
 export type AdminLoginPayload = {
   email: string;
