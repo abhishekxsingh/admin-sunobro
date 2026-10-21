@@ -83,10 +83,10 @@ export function VariationsPanel({
     <div className="p-5 technical-border bg-surface-container space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-widest">
+          <p className="font-mono text-[12px] uppercase tracking-widest">
             Step 2 · Variations for {product.name}
           </p>
-          <p className="font-mono text-[10px] text-muted-foreground mt-1">
+          <p className="font-mono text-[11px] text-muted-foreground mt-1">
             {q?.productId
               ? `Qikink ${q.productId} · ${q.design ?? ""} · expects ${q.expectedVariants ?? "?"} variants (${q.colourCount ?? "?"} colours × ${q.sizeRange ?? "?"})`
               : "Not linked to a Qikink export — the table alone is used."}
@@ -105,7 +105,7 @@ export function VariationsPanel({
       <div>
         <label
           htmlFor={`variations-${product.id}`}
-          className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+          className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
         >
           Paste the Product Variations table (Qikink → My Products → product → Variations → select
           all rows → copy). Include every page.
@@ -121,23 +121,23 @@ export function VariationsPanel({
           placeholder={
             "Name\tVariation\tProduct SKU\tDesign SKU\tStore SKU\tImage\tProduct Cost\tSelling Cost\nUnisex Classic Crew T-Shirt\tWhite - S\tMRnHs-Wh-S\tshipfix\tv-9Rqh0i…\t\t265.87\t599"
           }
-          className="w-full bg-muted px-3 py-2 font-mono text-[11px] technical-border resize-y"
+          className="w-full bg-muted px-3 py-2 font-mono text-[12px] technical-border resize-y"
         />
         <div className="mt-2 flex justify-end">
           <button
             type="button"
             onClick={() => void send(true)}
             disabled={busy !== null || !text.trim()}
-            className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-40"
+            className="technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all disabled:opacity-40"
           >
             {busy === "read" ? "READING..." : "READ TABLE"}
           </button>
         </div>
       </div>
 
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
       {problems.length > 0 && (
-        <ul className="p-3 technical-border border-destructive/40 bg-destructive/5 font-mono text-[11px] text-destructive list-disc pl-7 space-y-0.5">
+        <ul className="p-3 technical-border border-destructive/40 bg-destructive/5 font-mono text-[12px] text-destructive list-disc pl-7 space-y-0.5">
           {problems.map((p, i) => (
             <li key={i}>
               <span className="opacity-70">{p.where}:</span> {p.message}
@@ -146,14 +146,14 @@ export function VariationsPanel({
         </ul>
       )}
       {result?.warnings.map((w) => (
-        <p key={w} className="font-mono text-[11px] text-tertiary">
+        <p key={w} className="font-mono text-[12px] text-tertiary">
           {w}
         </p>
       ))}
 
       {result && result.colours.length > 0 && (
         <div className="space-y-3">
-          <p className="font-mono text-[11px]">
+          <p className="font-mono text-[12px]">
             {result.variants} variants · {result.colours.length} colours
             {result.expected ? ` · export expects ${result.expected}` : ""} · one image per colour
             (Qikink mockup → right-click → copy image address)
@@ -165,7 +165,7 @@ export function VariationsPanel({
                 <div className="min-w-0 flex-1 space-y-1">
                   <p className="text-sm font-medium">
                     {c.colour}{" "}
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="font-mono text-[11px] text-muted-foreground">
                       {c.sizes.join(" · ")}
                       {c.cost != null ? ` · cost ₹${c.cost}` : ""}
                     </span>
@@ -176,14 +176,14 @@ export function VariationsPanel({
                     value={images[c.colour] ?? ""}
                     onChange={(e) => setImages((m) => ({ ...m, [c.colour]: e.target.value }))}
                     placeholder="https://qikink-assets…/Front_1_c_1.jpg"
-                    className="w-full bg-muted px-2 py-1 font-mono text-[11px] technical-border"
+                    className="w-full bg-muted px-2 py-1 font-mono text-[12px] technical-border"
                   />
                 </div>
               </div>
             ))}
           </div>
           {missingImages.length > 0 && (
-            <p className="font-mono text-[10px] text-muted-foreground">
+            <p className="font-mono text-[11px] text-muted-foreground">
               No image yet for {missingImages.map((c) => c.colour).join(", ")} — the website will
               show the cover and say “photo shows another colour”. You can add links later by
               re-pasting.
@@ -191,7 +191,7 @@ export function VariationsPanel({
           )}
           <div className="flex items-center justify-end gap-3">
             {saved && (
-              <span className="font-mono text-[11px] text-secondary">
+              <span className="font-mono text-[12px] text-secondary">
                 Saved — review it, then PUBLISH.
               </span>
             )}
@@ -199,7 +199,7 @@ export function VariationsPanel({
               type="button"
               onClick={() => void send(false)}
               disabled={busy !== null || problems.length > 0}
-              className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40 flex items-center gap-2"
+              className="btn-primary px-4 py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all disabled:opacity-40 flex items-center gap-2"
             >
               {busy === "save" ? <Spinner /> : <Save className="h-3 w-3" aria-hidden />}
               {busy === "save" ? "SAVING..." : `SAVE ${result.variants} VARIATIONS`}

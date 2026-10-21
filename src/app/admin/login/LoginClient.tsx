@@ -84,7 +84,7 @@ export function LoginClient() {
         <div className="flex flex-col items-center mb-10">
           <Logo size="lg" />
           <h1 className="mt-6 text-2xl font-bold tracking-tight">SunoBro Admin</h1>
-          <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-widest mt-1">
+          <p className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest mt-1">
             Technical Operations // Authenticate
           </p>
         </div>
@@ -96,7 +96,7 @@ export function LoginClient() {
           <div className="space-y-2">
             <label
               htmlFor="email"
-              className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest"
+              className="font-mono text-[12px] text-muted-foreground uppercase tracking-widest"
             >
               Email
             </label>
@@ -114,7 +114,7 @@ export function LoginClient() {
           <div className="space-y-2">
             <label
               htmlFor="password"
-              className="font-mono text-[11px] text-muted-foreground uppercase tracking-widest"
+              className="font-mono text-[12px] text-muted-foreground uppercase tracking-widest"
             >
               Password
             </label>
@@ -148,13 +148,13 @@ export function LoginClient() {
                 <p>{error}</p>
                 {backendUnreachable && (
                   <>
-                    <p className="font-mono text-[10px] mt-2 opacity-70">
+                    <p className="font-mono text-[11px] mt-2 opacity-70">
                       /api → BACKEND_URL → POST /admin/auth/login
                     </p>
                     <button
                       type="button"
                       onClick={handleDemoMode}
-                      className="mt-3 font-mono text-[11px] uppercase tracking-widest underline hover:text-foreground transition-colors"
+                      className="mt-3 font-mono text-[12px] uppercase tracking-widest underline hover:text-foreground transition-colors"
                     >
                       View Demo →
                     </button>
@@ -169,14 +169,14 @@ export function LoginClient() {
             whileTap={{ scale: loading ? 1 : 0.98 }}
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-foreground text-background font-bold flex items-center justify-center gap-3 hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 btn-primary font-bold flex items-center justify-center gap-3 hover:bg-primary hover:text-primary-foreground transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Terminal className="h-4 w-4" />
             {loading ? "AUTHENTICATING..." : "SIGN IN"}
           </motion.button>
         </form>
 
-        <p className="mt-8 text-center font-mono text-[10px] text-muted-foreground/60 uppercase tracking-widest">
+        <p className="mt-8 text-center font-mono text-[11px] text-muted-foreground/60 uppercase tracking-widest">
           System Message: [Access Restricted to Ops Personnel]
         </p>
       </motion.div>

@@ -138,7 +138,7 @@ export function ColourEntryForm({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="min-h-28 p-3 technical-border border-dashed flex items-center justify-center gap-2 font-mono text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground"
+        className="min-h-28 p-3 technical-border border-dashed flex items-center justify-center gap-2 font-mono text-[12px] text-muted-foreground hover:text-foreground hover:border-foreground"
       >
         <Plus className="h-4 w-4" /> ADD COLOUR
       </button>
@@ -149,14 +149,14 @@ export function ColourEntryForm({
 
   return (
     <div className="p-3 technical-border border-primary/40 bg-surface-lowest space-y-3 md:col-span-2 xl:col-span-3">
-      <p className="font-mono text-[11px] uppercase tracking-widest">
+      <p className="font-mono text-[12px] uppercase tracking-widest">
         Add a colour{mergeExisting ? " (or sizes to an existing one)" : ""}
       </p>
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label
             htmlFor={`${idPrefix}-colour`}
-            className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+            className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
           >
             Colour (as named in Qikink)
             <span className="text-destructive"> *</span>
@@ -180,12 +180,12 @@ export function ColourEntryForm({
               ))}
           </datalist>
           {taken && (
-            <p className="mt-1 font-mono text-[10px] text-tertiary">
+            <p className="mt-1 font-mono text-[11px] text-tertiary">
               {colour} is already on this product — use + SIZE on its card instead.
             </p>
           )}
           {match && mergeExisting && (
-            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+            <p className="mt-1 font-mono text-[11px] text-muted-foreground">
               {match} is already here — this adds the sizes it doesn&apos;t have yet.
             </p>
           )}
@@ -193,7 +193,7 @@ export function ColourEntryForm({
         <div>
           <label
             htmlFor={`${idPrefix}-image`}
-            className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+            className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
           >
             Image link (Qikink mockup for this colour)
           </label>
@@ -204,13 +204,13 @@ export function ColourEntryForm({
             placeholder={
               match ? "leave empty to keep its image" : "https://qikink-assets…/Front_1_c_2.jpg"
             }
-            className="w-full bg-muted px-3 py-2 font-mono text-[11px] technical-border"
+            className="w-full bg-muted px-3 py-2 font-mono text-[12px] technical-border"
           />
         </div>
       </div>
 
       <div>
-        <p className="font-mono text-[10px] text-muted-foreground uppercase mb-1">
+        <p className="font-mono text-[11px] text-muted-foreground uppercase mb-1">
           Sizes → Qikink Store SKU (starts with v-)<span className="text-destructive"> *</span> for
           every ticked size. Tip: paste the whole Store SKU column into the first box to fill them
           in order.
@@ -245,7 +245,7 @@ export function ColourEntryForm({
                     setRows((r) => ({ ...r, [size]: { ...rowFor(size), sku: e.target.value } }))
                   }
                   placeholder={has ? "already on this colour" : "v-…"}
-                  className={`min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[11px] technical-border ${
+                  className={`min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[12px] technical-border ${
                     on && row.sku && !row.sku.trim().startsWith("v-") ? "border-destructive/60" : ""
                   }`}
                 />
@@ -256,14 +256,14 @@ export function ColourEntryForm({
       </div>
 
       {chosen.some((sz) => rowFor(sz).sku.trim() && !rowFor(sz).sku.trim().startsWith("v-")) && (
-        <p className="font-mono text-[10px] text-destructive">
+        <p className="font-mono text-[11px] text-destructive">
           That looks like the Product SKU (MRnHs-…). Use the Store SKU — the code starting with v-
           in Qikink&apos;s Variations list.
         </p>
       )}
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
       <div className="flex items-center justify-between gap-3">
-        <p className="font-mono text-[10px] text-muted-foreground">
+        <p className="font-mono text-[11px] text-muted-foreground">
           {chosen.length} size{chosen.length === 1 ? "" : "s"}
           {missingSku.length
             ? ` · add the Store SKU for ${missingSku.join(", ")} — or untick ${missingSku.length === 1 ? "it" : "them"}`
@@ -274,7 +274,7 @@ export function ColourEntryForm({
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="px-3 py-1.5 font-mono text-[11px] text-muted-foreground hover:text-foreground"
+              className="px-3 py-1.5 font-mono text-[12px] text-muted-foreground hover:text-foreground"
             >
               CANCEL
             </button>
@@ -292,7 +292,7 @@ export function ColourEntryForm({
               missingSku.length > 0 ||
               wrongSku.length > 0
             }
-            className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground px-4 py-1.5 font-mono text-[11px] font-bold hover:opacity-90 disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 btn-primary px-4 py-1.5 font-mono text-[12px] font-bold hover:opacity-90 disabled:opacity-40"
           >
             {busy ? <Spinner /> : <Plus className="h-3 w-3" aria-hidden />}
             {busy ? "ADDING..." : `${submitVerb} ${label}`}
@@ -352,7 +352,7 @@ export function AddSizeInline({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="px-2 py-1 font-mono text-[10px] text-muted-foreground border border-dashed border-border/60 hover:text-foreground hover:border-foreground"
+        className="px-2 py-1 font-mono text-[11px] text-muted-foreground border border-dashed border-border/60 hover:text-foreground hover:border-foreground"
       >
         + SIZE
       </button>
@@ -386,7 +386,7 @@ export function AddSizeInline({
           list={`size-options-${product.id}-${colour}`}
           value={size}
           onChange={(e) => setSize(e.target.value)}
-          className="w-16 bg-muted px-2 py-1 font-mono text-[11px] technical-border"
+          className="w-16 bg-muted px-2 py-1 font-mono text-[12px] technical-border"
         />
         <datalist id={`size-options-${product.id}-${colour}`}>
           {options.map((s) => (
@@ -398,13 +398,13 @@ export function AddSizeInline({
           value={sku}
           onChange={(e) => setSku(e.target.value)}
           placeholder="Store SKU v-…"
-          className="min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[11px] technical-border"
+          className="min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[12px] technical-border"
         />
         <button
           type="button"
           onClick={() => void submit()}
           disabled={busy || !size.trim()}
-          className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 font-mono text-[10px] font-bold disabled:opacity-40"
+          className="inline-flex items-center gap-1 btn-primary px-2 py-1 font-mono text-[11px] font-bold disabled:opacity-40"
         >
           {busy ? <Spinner /> : <Plus className="h-3 w-3" aria-hidden />}
           ADD
@@ -418,7 +418,7 @@ export function AddSizeInline({
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
-      {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
     </div>
   );
 }
@@ -467,13 +467,13 @@ export function ColourImageEditor({
             if (e.key === "Escape") onClose();
           }}
           placeholder="https://qikink-assets…/Front_1_c_2.jpg"
-          className="min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[11px] technical-border"
+          className="min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[12px] technical-border"
         />
         <button
           type="button"
           onClick={() => void save(link.trim())}
           disabled={busy}
-          className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground px-2 py-1 font-mono text-[10px] font-bold disabled:opacity-40"
+          className="inline-flex items-center gap-1 btn-primary px-2 py-1 font-mono text-[11px] font-bold disabled:opacity-40"
         >
           {busy ? <Spinner /> : <Check className="h-3 w-3" aria-hidden />}
           SAVE
@@ -487,7 +487,7 @@ export function ColourImageEditor({
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
-      {error && <p className="font-mono text-[10px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function QikinkIdentity({ product }: { product: AdminProduct }) {
   const q = product.qikink;
   if (!q?.productId && !q?.design) {
     return (
-      <p className="font-mono text-[10px] text-muted-foreground/70">
+      <p className="font-mono text-[11px] text-muted-foreground/70">
         Not linked to a Qikink product
       </p>
     );
@@ -25,7 +25,7 @@ export function QikinkIdentity({ product }: { product: AdminProduct }) {
   ].filter(Boolean);
 
   return (
-    <div className="mt-1 space-y-0.5 font-mono text-[10px]">
+    <div className="mt-1 space-y-0.5 font-mono text-[11px]">
       {q.productId && (
         <p className="flex items-center gap-1.5">
           <span className="bg-primary/10 px-1.5 py-0.5 text-primary">QIKINK #{q.productId}</span>

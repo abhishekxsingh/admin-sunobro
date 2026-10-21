@@ -130,7 +130,7 @@ function MappingBadge({ mapped, total }: { mapped: number; total: number }) {
   const complete = total > 0 && mapped === total;
   return (
     <span
-      className={`font-mono text-[10px] px-2 py-0.5 border ${
+      className={`font-mono text-[11px] px-2 py-0.5 border rounded-full ${
         complete
           ? "bg-secondary/10 text-secondary border-secondary/20"
           : "bg-destructive/10 text-destructive border-destructive/20"
@@ -460,11 +460,11 @@ export function ProductsClient() {
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
           <div className="flex items-center gap-3 mb-2">
-            <p className="font-mono text-[11px] text-primary uppercase tracking-widest">
+            <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit">
               Products Catalog
             </p>
             {isDemo && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
                 Demo Data
               </span>
             )}
@@ -472,7 +472,7 @@ export function ProductsClient() {
           <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
             <div>
               <h2 className="text-4xl font-bold">Product Catalog</h2>
-              <p className="font-mono text-[10px] text-muted-foreground mt-1">
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">
                 {products.length} PRODUCT{products.length === 1 ? "" : "S"} ·{" "}
                 {products.filter((p) => p.status === "active").length} LIVE
                 {inReview > 0 ? ` · ${inReview} IN REVIEW` : ""}
@@ -482,25 +482,25 @@ export function ProductsClient() {
               <a
                 href="/SunoBro-Product-Sheet.xlsx"
                 download
-                className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
+                className="technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all flex items-center gap-2"
               >
                 <Download className="h-3.5 w-3.5" /> PRODUCT SHEET
               </a>
               <button
                 onClick={() => setShowQikinkExport(true)}
-                className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
+                className="technical-border border-primary/40 bg-primary/10 text-primary px-4 py-2 font-mono text-[12px] font-bold hover:bg-primary/20 transition-all flex items-center gap-2"
               >
                 <Upload className="h-3.5 w-3.5" /> QIKINK EXPORT
               </button>
               <button
                 onClick={() => setShowImport(true)}
-                className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all flex items-center gap-2"
+                className="bg-muted technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all flex items-center gap-2"
               >
                 <FileSpreadsheet className="h-3.5 w-3.5" /> IMPORT SHEET
               </button>
               <button
                 onClick={openCreate}
-                className="bg-foreground text-background px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
+                className="btn-primary px-4 py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all flex items-center gap-2"
               >
                 <Plus className="h-3.5 w-3.5" /> ADD PRODUCT
               </button>
@@ -509,7 +509,7 @@ export function ProductsClient() {
         </header>
 
         {/* How listing ↔ Qikink works */}
-        <section className="mb-8 p-4 technical-border bg-surface-container font-mono text-[10px] text-muted-foreground grid md:grid-cols-4 gap-4">
+        <section className="mb-8 p-4 technical-border bg-surface-container font-mono text-[11px] text-muted-foreground grid md:grid-cols-4 gap-4">
           {[
             [
               "01 · QIKINK EXPORT",
@@ -536,7 +536,7 @@ export function ProductsClient() {
         </section>
 
         {liveUnmapped.length > 0 && (
-          <div className="mb-6 p-4 technical-border border-destructive/40 bg-destructive/5 font-mono text-[11px] text-destructive">
+          <div className="mb-6 p-4 technical-border border-destructive/40 bg-destructive/5 font-mono text-[12px] text-destructive">
             {liveUnmapped.length} LIVE PRODUCT{liveUnmapped.length === 1 ? " IS" : "S ARE"} MISSING
             QIKINK SKUS — paid orders for them cannot be printed. Map them (MAP SKUS) or switch them
             to DRAFT: {liveUnmapped.map((p) => p.name).join(", ")}.
@@ -545,7 +545,7 @@ export function ProductsClient() {
 
         {notice && (
           <p
-            className={`mb-4 font-mono text-[11px] ${notice.error ? "text-destructive" : "text-secondary"}`}
+            className={`mb-4 font-mono text-[12px] ${notice.error ? "text-destructive" : "text-secondary"}`}
           >
             {notice.message}
           </p>
@@ -568,7 +568,7 @@ export function ProductsClient() {
             onSubmit={handleSave}
             className="mb-8 p-6 technical-border bg-surface-lowest space-y-8"
           >
-            <p className="font-mono text-[11px] uppercase tracking-widest">
+            <p className="font-mono text-[12px] uppercase tracking-widest">
               {view === "create" ? "New Product" : `Edit: ${editTarget?.name}`}
               {view === "edit" && editTarget?.qikink?.productId && (
                 <span className="ml-3 normal-case tracking-normal text-primary">
@@ -581,7 +581,7 @@ export function ProductsClient() {
             {/* Storefront listing */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Name
                   <Req />
                 </label>
@@ -593,7 +593,7 @@ export function ProductsClient() {
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Slug (URL — auto from name if empty)
                 </label>
                 <input
@@ -603,7 +603,7 @@ export function ProductsClient() {
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Base price (INR)
                   <Req />
                 </label>
@@ -617,10 +617,10 @@ export function ProductsClient() {
                 />
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Inventory
                 </label>
-                <label className="flex items-center gap-2 font-mono text-[11px] py-2">
+                <label className="flex items-center gap-2 font-mono text-[12px] py-2">
                   <input
                     type="checkbox"
                     checked={form.trackInventory}
@@ -630,7 +630,7 @@ export function ProductsClient() {
                 </label>
               </div>
               <div className="md:col-span-2">
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Image URLs (one per line — first is the cover; Qikink mockup links work)
                   <Req />
                 </label>
@@ -642,7 +642,7 @@ export function ProductsClient() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                   Description
                 </label>
                 <textarea
@@ -657,13 +657,13 @@ export function ProductsClient() {
             {/* Variants ↔ Qikink */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="font-mono text-[11px] uppercase tracking-widest">
+                <p className="font-mono text-[12px] uppercase tracking-widest">
                   Variants → Qikink SKUs
                 </p>
                 <MappingBadge mapped={mappedCount} total={onVariants.length} />
               </div>
 
-              <div className="grid gap-2 p-3 technical-border border-dashed font-mono text-[10px] text-muted-foreground md:grid-cols-3">
+              <div className="grid gap-2 p-3 technical-border border-dashed font-mono text-[11px] text-muted-foreground md:grid-cols-3">
                 <p>
                   <span className="text-foreground">1 · Colour</span> — Qikink → My Products → the
                   product → Variations. In “Black - S” the colour is <b>Black</b>.
@@ -690,7 +690,7 @@ export function ProductsClient() {
               />
 
               <details className="technical-border px-3 py-2">
-                <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+                <summary className="cursor-pointer font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
                   Advanced · build an empty grid of sizes × colours and type SKUs row by row
                 </summary>
                 <div className="mt-3 grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
@@ -716,7 +716,7 @@ export function ProductsClient() {
                   <button
                     type="button"
                     onClick={buildGrid}
-                    className="technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all"
+                    className="technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all"
                   >
                     BUILD GRID
                   </button>
@@ -737,7 +737,7 @@ export function ProductsClient() {
                         "Our SKU",
                         "",
                       ].map((h) => (
-                        <th key={h} className="p-2 font-mono text-[10px] text-muted-foreground">
+                        <th key={h} className="p-2 font-mono text-[11px] text-muted-foreground">
                           {h}
                         </th>
                       ))}
@@ -748,7 +748,7 @@ export function ProductsClient() {
                       <tr>
                         <td
                           colSpan={8}
-                          className="p-6 text-center font-mono text-[11px] text-muted-foreground"
+                          className="p-6 text-center font-mono text-[12px] text-muted-foreground"
                         >
                           ADD A COLOUR ABOVE — ITS SIZES AND STORE SKUS APPEAR HERE
                         </td>
@@ -767,7 +767,9 @@ export function ProductsClient() {
                             <td className="p-2 font-mono text-xs">
                               {row.color}
                               {!row.enabled && (
-                                <span className="ml-1 text-[9px] text-muted-foreground">(OFF)</span>
+                                <span className="ml-1 text-[10px] text-muted-foreground">
+                                  (OFF)
+                                </span>
                               )}
                             </td>
                             <td className="p-2">
@@ -780,17 +782,17 @@ export function ProductsClient() {
                                 }`}
                               />
                               {wrong && (
-                                <p className="font-mono text-[9px] text-destructive mt-0.5">
+                                <p className="font-mono text-[10px] text-destructive mt-0.5">
                                   PRODUCT SKU — USE THE STORE SKU (v-…)
                                 </p>
                               )}
                               {missing && !wrong && (
-                                <p className="font-mono text-[9px] text-destructive mt-0.5">
+                                <p className="font-mono text-[10px] text-destructive mt-0.5">
                                   REQUIRED — OR REMOVE THIS SIZE
                                 </p>
                               )}
                               {duplicate && (
-                                <p className="font-mono text-[9px] text-destructive mt-0.5">
+                                <p className="font-mono text-[10px] text-destructive mt-0.5">
                                   USED BY ANOTHER VARIANT
                                 </p>
                               )}
@@ -824,7 +826,7 @@ export function ProductsClient() {
                                 />
                               </td>
                             )}
-                            <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                            <td className="p-2 font-mono text-[11px] text-muted-foreground">
                               {row.sku || "auto"}
                             </td>
                             <td className="p-2">
@@ -856,7 +858,7 @@ export function ProductsClient() {
                   : "border-tertiary/40 bg-tertiary/5"
               }`}
             >
-              <p className="font-mono text-[11px] uppercase tracking-widest mb-2">
+              <p className="font-mono text-[12px] uppercase tracking-widest mb-2">
                 {readyToSell
                   ? "Ready to sell — orders will reach Qikink"
                   : `Before customers can order (${checklist.filter((c) => !c.ok).length} left)`}
@@ -865,7 +867,7 @@ export function ProductsClient() {
                 {checklist.map((c) => (
                   <li
                     key={c.label}
-                    className={`flex items-center gap-2 font-mono text-[11px] ${
+                    className={`flex items-center gap-2 font-mono text-[12px] ${
                       c.ok ? "text-secondary" : "text-foreground"
                     }`}
                   >
@@ -878,7 +880,7 @@ export function ProductsClient() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 font-mono text-[10px] text-muted-foreground">
+              <p className="mt-2 font-mono text-[11px] text-muted-foreground">
                 <span className="text-destructive">*</span> required to sell. You can save a product
                 in review with things missing and finish it later.
               </p>
@@ -887,7 +889,7 @@ export function ProductsClient() {
             {/* Publish */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-2">
+                <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-2">
                   Storefront status
                 </label>
                 <div className="flex gap-2">
@@ -902,7 +904,7 @@ export function ProductsClient() {
                           : undefined
                       }
                       onClick={() => setForm((f) => ({ ...f, status: s }))}
-                      className={`px-4 py-2 font-mono text-[11px] technical-border transition-all disabled:opacity-40 ${
+                      className={`px-4 py-2 font-mono text-[12px] technical-border transition-all disabled:opacity-40 ${
                         form.status === s
                           ? "bg-secondary/20 text-secondary border-secondary/40"
                           : "text-muted-foreground"
@@ -917,7 +919,7 @@ export function ProductsClient() {
                   ))}
                 </div>
                 {!readyToSell && (
-                  <p className="font-mono text-[10px] text-muted-foreground mt-1">
+                  <p className="font-mono text-[11px] text-muted-foreground mt-1">
                     ACTIVE unlocks when the checklist is complete.
                   </p>
                 )}
@@ -926,21 +928,21 @@ export function ProductsClient() {
                 <button
                   type="button"
                   onClick={() => setView("list")}
-                  className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  className="px-4 py-2 font-mono text-[12px] text-muted-foreground hover:text-foreground transition-colors"
                 >
                   CANCEL
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
+                  className="btn-primary px-4 py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
                   {saving ? <Spinner /> : <Save className="h-3 w-3" aria-hidden />}
                   {saving ? "SAVING..." : "SAVE PRODUCT"}
                 </button>
               </div>
             </div>
-            {formError && <p className="font-mono text-[11px] text-destructive">{formError}</p>}
+            {formError && <p className="font-mono text-[12px] text-destructive">{formError}</p>}
           </form>
         )}
 

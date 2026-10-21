@@ -72,7 +72,7 @@ export function SheetImportPanel({
   return (
     <section className="mb-8 p-6 technical-border bg-surface-lowest space-y-5">
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-widest flex items-center gap-2">
+        <p className="font-mono text-[12px] uppercase tracking-widest flex items-center gap-2">
           <FileSpreadsheet className="h-4 w-4" /> Import product sheet
         </p>
         <button
@@ -86,7 +86,7 @@ export function SheetImportPanel({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <label className="bg-muted technical-border px-4 py-2 font-mono text-[11px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
+        <label className="bg-muted technical-border px-4 py-2 font-mono text-[12px] hover:border-foreground transition-all cursor-pointer flex items-center gap-2">
           <Upload className="h-3.5 w-3.5" />
           {busy === "preview"
             ? "READING..."
@@ -103,23 +103,23 @@ export function SheetImportPanel({
           />
         </label>
         {fileName && (
-          <span className="font-mono text-[11px] text-muted-foreground">{fileName}</span>
+          <span className="font-mono text-[12px] text-muted-foreground">{fileName}</span>
         )}
       </div>
-      <p className="font-mono text-[10px] text-muted-foreground">
+      <p className="font-mono text-[11px] text-muted-foreground">
         Nothing is saved until you click APPLY IMPORT. Products already on the site are updated in
         place; variants removed from the sheet are removed from the product.
       </p>
 
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
 
       {problems.length > 0 && (
         <div className="p-4 technical-border border-destructive/40 bg-destructive/5 space-y-1">
-          <p className="font-mono text-[11px] text-destructive">
+          <p className="font-mono text-[12px] text-destructive">
             FIX {problems.length} PROBLEM{problems.length === 1 ? "" : "S"} IN THE SHEET, THEN
             UPLOAD IT AGAIN:
           </p>
-          <ul className="font-mono text-[11px] text-destructive list-disc pl-5 space-y-0.5">
+          <ul className="font-mono text-[12px] text-destructive list-disc pl-5 space-y-0.5">
             {problems.map((p, i) => (
               <li key={i}>
                 <span className="opacity-70">{p.where}:</span> {p.message}
@@ -143,7 +143,7 @@ export function SheetImportPanel({
                   "Store SKUs",
                   "Variants",
                 ].map((h) => (
-                  <th key={h} className="p-2 font-mono text-[10px] text-muted-foreground uppercase">
+                  <th key={h} className="p-2 font-mono text-[11px] text-muted-foreground uppercase">
                     {h}
                   </th>
                 ))}
@@ -153,22 +153,22 @@ export function SheetImportPanel({
               {preview.products.map((p) => (
                 <tr key={p.name} className="border-b border-border/30 last:border-b-0">
                   <td className="p-2 text-sm">{p.name}</td>
-                  <td className="p-2 font-mono text-[10px]">
+                  <td className="p-2 font-mono text-[11px]">
                     {p.action === "create" ? "NEW" : "UPDATE"}
                   </td>
-                  <td className="p-2 font-mono text-[10px]">
+                  <td className="p-2 font-mono text-[11px]">
                     {p.status === "active" ? "LIVE" : p.status === "review" ? "IN REVIEW" : "DRAFT"}
                   </td>
                   <td className="p-2 font-mono text-xs">₹{p.price.toLocaleString("en-IN")}</td>
-                  <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                  <td className="p-2 font-mono text-[11px] text-muted-foreground">
                     {p.colours.join(", ")} × {p.sizes.join(", ")}
                   </td>
                   <td
-                    className={`p-2 font-mono text-[10px] ${p.mapped === p.variants ? "text-secondary" : "text-destructive"}`}
+                    className={`p-2 font-mono text-[11px] ${p.mapped === p.variants ? "text-secondary" : "text-destructive"}`}
                   >
                     {p.mapped}/{p.variants}
                   </td>
-                  <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                  <td className="p-2 font-mono text-[11px] text-muted-foreground">
                     {p.action === "create"
                       ? `+${p.added}`
                       : `+${p.added} new · −${p.removed} removed · ${p.kept} kept`}
@@ -182,7 +182,7 @@ export function SheetImportPanel({
 
       {preview?.applied && (
         <p
-          className={`font-mono text-[11px] ${failed.length ? "text-destructive" : "text-secondary"}`}
+          className={`font-mono text-[12px] ${failed.length ? "text-destructive" : "text-secondary"}`}
         >
           {failed.length
             ? `Imported with ${failed.length} error(s): ${failed.map((f) => `${f.name} — ${f.errors?.join("; ")}`).join(" | ")}`
@@ -195,7 +195,7 @@ export function SheetImportPanel({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground"
+            className="px-4 py-2 font-mono text-[12px] text-muted-foreground hover:text-foreground"
           >
             CANCEL
           </button>
@@ -203,7 +203,7 @@ export function SheetImportPanel({
             type="button"
             onClick={handleApply}
             disabled={busy !== null || problems.length > 0 || preview.products.length === 0}
-            className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-40"
+            className="btn-primary px-4 py-2 font-mono text-[12px] font-bold hover:opacity-90 transition-all disabled:opacity-40"
           >
             {busy === "apply" ? "IMPORTING..." : `APPLY IMPORT (${preview.products.length})`}
           </button>

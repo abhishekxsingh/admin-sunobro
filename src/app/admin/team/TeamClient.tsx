@@ -93,7 +93,7 @@ function CredentialsCard({ creds, onClose }: { creds: TeamCredentials; onClose: 
   return (
     <section className="mb-8 p-5 technical-border border-secondary/40 bg-secondary/5 space-y-3">
       <div className="flex items-start justify-between gap-4">
-        <p className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-widest text-secondary">
+        <p className="flex items-center gap-2 font-mono text-[12px] uppercase tracking-widest text-secondary">
           <KeyRound className="h-3.5 w-3.5" /> Login details for {creds.member.name}
         </p>
         <button
@@ -135,12 +135,12 @@ function CredentialsCard({ creds, onClose }: { creds: TeamCredentials; onClose: 
         <button
           type="button"
           onClick={() => copy("all", message)}
-          className="bg-secondary text-secondary-foreground px-3 py-1.5 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90"
+          className="btn-primary px-3 py-1.5 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90"
         >
           {copied === "all" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied === "all" ? "COPIED" : "COPY LOGIN MESSAGE"}
         </button>
-        <p className="font-mono text-[10px] text-muted-foreground">
+        <p className="font-mono text-[11px] text-muted-foreground">
           {creds.temporaryPassword
             ? "This password is shown only now — share it privately (WhatsApp, in person)."
             : "They sign in with the password you set."}
@@ -188,7 +188,7 @@ function AddMemberForm({
   return (
     <form onSubmit={submit} className="mb-8 p-6 technical-border bg-surface-lowest space-y-5">
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[11px] uppercase tracking-widest">Add a team member</p>
+        <p className="font-mono text-[12px] uppercase tracking-widest">Add a team member</p>
         <button
           type="button"
           onClick={onCancel}
@@ -202,7 +202,7 @@ function AddMemberForm({
         <div>
           <label
             htmlFor="member-name"
-            className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+            className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
           >
             Name
           </label>
@@ -218,7 +218,7 @@ function AddMemberForm({
         <div>
           <label
             htmlFor="member-email"
-            className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
+            className="block font-mono text-[11px] text-muted-foreground uppercase mb-1"
           >
             Email (they sign in with this)
           </label>
@@ -251,13 +251,13 @@ function AddMemberForm({
             <span className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Icon className="h-4 w-4" /> {label}
             </span>
-            <span className="mt-1 block font-mono text-[10px] text-muted-foreground">{hint}</span>
+            <span className="mt-1 block font-mono text-[11px] text-muted-foreground">{hint}</span>
           </button>
         ))}
       </div>
 
       <div className="space-y-2">
-        <label className="flex items-center gap-2 font-mono text-[11px]">
+        <label className="flex items-center gap-2 font-mono text-[12px]">
           <input type="checkbox" checked={setOwn} onChange={(e) => setSetOwn(e.target.checked)} />
           SET THEIR PASSWORD MYSELF (otherwise a one-time password is generated)
         </label>
@@ -275,19 +275,19 @@ function AddMemberForm({
         )}
       </div>
 
-      {error && <p className="font-mono text-[11px] text-destructive">{error}</p>}
+      {error && <p className="font-mono text-[12px] text-destructive">{error}</p>}
       <div className="flex justify-end gap-3">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 font-mono text-[11px] text-muted-foreground hover:text-foreground"
+          className="px-4 py-2 font-mono text-[12px] text-muted-foreground hover:text-foreground"
         >
           CANCEL
         </button>
         <button
           type="submit"
           disabled={saving}
-          className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
+          className="btn-primary px-4 py-2 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90 disabled:opacity-50"
         >
           {saving ? <Spinner /> : <UserPlus className="h-3 w-3" />}
           {saving ? "ADDING..." : "ADD MEMBER"}
@@ -364,13 +364,13 @@ export function TeamClient() {
 
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
-          <p className="font-mono text-[11px] text-primary uppercase tracking-widest mb-2">
+          <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit mb-2">
             Access
           </p>
           <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
             <div>
               <h2 className="text-4xl font-bold">Team</h2>
-              <p className="font-mono text-[10px] text-muted-foreground mt-1">
+              <p className="font-mono text-[11px] text-muted-foreground mt-1">
                 {members
                   ? `${members.length} MEMBER${members.length === 1 ? "" : "S"} · ${activeCount} ACTIVE`
                   : "WHO CAN SIGN IN TO THIS ADMIN PANEL"}
@@ -383,7 +383,7 @@ export function TeamClient() {
                   setAdding(true);
                   setCreds(null);
                 }}
-                className="bg-foreground text-background px-4 py-2 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90"
+                className="btn-primary px-4 py-2 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90"
               >
                 <UserPlus className="h-3.5 w-3.5" /> ADD MEMBER
               </button>
@@ -418,7 +418,7 @@ export function TeamClient() {
                     {["Member", "Role", "Status", "Last sign-in", "Actions"].map((h) => (
                       <th
                         key={h}
-                        className="p-4 font-mono text-[11px] text-muted-foreground uppercase"
+                        className="p-4 font-mono text-[12px] text-muted-foreground uppercase"
                       >
                         {h}
                       </th>
@@ -455,19 +455,19 @@ export function TeamClient() {
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className="h-9 w-9 shrink-0 rounded-full bg-primary/20 flex items-center justify-center font-mono text-[11px] text-primary">
+                            <div className="h-9 w-9 shrink-0 rounded-full bg-primary/20 flex items-center justify-center font-mono text-[12px] text-primary">
                               {initials(m.name)}
                             </div>
                             <div>
                               <p className="text-sm font-medium">
                                 {m.name}
                                 {m.isYou && (
-                                  <span className="ml-2 font-mono text-[9px] px-1.5 py-0.5 bg-primary/15 text-primary">
+                                  <span className="ml-2 font-mono text-[10px] px-1.5 py-0.5 bg-primary/15 text-primary">
                                     YOU
                                   </span>
                                 )}
                               </p>
-                              <p className="font-mono text-[10px] text-muted-foreground">
+                              <p className="font-mono text-[11px] text-muted-foreground">
                                 {m.email}
                               </p>
                             </div>
@@ -488,7 +488,7 @@ export function TeamClient() {
                                 ),
                               )
                             }
-                            className="bg-muted technical-border px-2 py-1 font-mono text-[11px] disabled:opacity-60"
+                            className="bg-muted technical-border px-2 py-1 font-mono text-[12px] disabled:opacity-60"
                           >
                             {ROLES.map((r) => (
                               <option key={r.key} value={r.key}>
@@ -499,7 +499,7 @@ export function TeamClient() {
                         </td>
                         <td className="p-4">
                           <span
-                            className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 border ${
+                            className={`inline-flex items-center gap-1 font-mono text-[11px] px-2 py-0.5 border rounded-full ${
                               m.active
                                 ? "bg-secondary/10 text-secondary border-secondary/20"
                                 : "border-border/40 text-muted-foreground"
@@ -513,13 +513,13 @@ export function TeamClient() {
                             {m.active ? "ACTIVE" : "DEACTIVATED"}
                           </span>
                         </td>
-                        <td className="p-4 font-mono text-[11px] text-muted-foreground whitespace-nowrap">
+                        <td className="p-4 font-mono text-[12px] text-muted-foreground whitespace-nowrap">
                           {when(m.lastLoginAt)}
-                          <p className="text-[10px]">added {when(m.createdAt).split(",")[0]}</p>
+                          <p className="text-[11px]">added {when(m.createdAt).split(",")[0]}</p>
                         </td>
                         <td className="p-4">
                           {m.isYou ? (
-                            <p className="font-mono text-[10px] text-muted-foreground">
+                            <p className="font-mono text-[11px] text-muted-foreground">
                               Change your password in Profile.
                             </p>
                           ) : (
@@ -540,7 +540,7 @@ export function TeamClient() {
                                     setCreds(c);
                                   })
                                 }
-                                className="inline-flex items-center gap-1 font-mono text-[11px] text-primary hover:underline disabled:opacity-50"
+                                className="inline-flex items-center gap-1 font-mono text-[12px] text-primary hover:underline disabled:opacity-50"
                               >
                                 {busy === `${m.id}:reset` ? (
                                   <Spinner />
@@ -559,7 +559,7 @@ export function TeamClient() {
                                     ),
                                   )
                                 }
-                                className={`inline-flex items-center gap-1 font-mono text-[11px] hover:underline disabled:opacity-50 ${
+                                className={`inline-flex items-center gap-1 font-mono text-[12px] hover:underline disabled:opacity-50 ${
                                   m.active ? "text-muted-foreground" : "font-bold text-secondary"
                                 }`}
                               >
@@ -587,7 +587,7 @@ export function TeamClient() {
                                     setMembers((prev) => (prev || []).filter((x) => x.id !== m.id));
                                   })
                                 }
-                                className="inline-flex items-center gap-1 font-mono text-[11px] text-destructive hover:underline disabled:opacity-50"
+                                className="inline-flex items-center gap-1 font-mono text-[12px] text-destructive hover:underline disabled:opacity-50"
                               >
                                 {busy === `${m.id}:remove` ? (
                                   <Spinner />
@@ -599,7 +599,7 @@ export function TeamClient() {
                             </div>
                           )}
                           {rowError?.id === m.id && (
-                            <p className="mt-2 max-w-xs font-mono text-[10px] text-destructive">
+                            <p className="mt-2 max-w-xs font-mono text-[11px] text-destructive">
                               {rowError.message}
                             </p>
                           )}
@@ -610,7 +610,7 @@ export function TeamClient() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-4 font-mono text-[10px] text-muted-foreground">
+            <p className="mt-4 font-mono text-[11px] text-muted-foreground">
               Deactivating or removing someone signs them out at once. Role changes apply to their
               open session straight away. There must always be at least one active admin.
             </p>

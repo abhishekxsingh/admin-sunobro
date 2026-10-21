@@ -88,7 +88,7 @@ export function SettingsClient() {
 
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
-          <p className="font-mono text-[11px] text-primary uppercase tracking-widest mb-2">
+          <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit mb-2">
             System Configuration
           </p>
           <h2 className="text-4xl font-bold">Settings</h2>
@@ -98,16 +98,16 @@ export function SettingsClient() {
           {/* Store Configuration */}
           <section className="technical-border bg-surface-lowest p-6 space-y-5">
             <div>
-              <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">
+              <p className="font-mono text-[12px] uppercase tracking-widest mb-0.5">
                 Store Configuration
               </p>
-              <p className="font-mono text-[10px] text-muted-foreground">
+              <p className="font-mono text-[11px] text-muted-foreground">
                 [DISPLAY ONLY — changes are not persisted to backend yet]
               </p>
             </div>
 
             <div>
-              <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+              <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                 Store Name
               </label>
               <input
@@ -118,7 +118,7 @@ export function SettingsClient() {
             </div>
 
             <div>
-              <label className="block font-mono text-[10px] text-muted-foreground uppercase mb-1">
+              <label className="block font-mono text-[11px] text-muted-foreground uppercase mb-1">
                 Default Currency
               </label>
               <select
@@ -136,7 +136,7 @@ export function SettingsClient() {
               <button
                 disabled
                 title="Backend endpoint not wired yet"
-                className="bg-muted technical-border px-6 py-2 font-mono text-[11px] opacity-50 cursor-not-allowed"
+                className="bg-muted technical-border px-6 py-2 font-mono text-[12px] opacity-50 cursor-not-allowed"
               >
                 SAVE CHANGES — NOT CONNECTED TO BACKEND
               </button>
@@ -147,15 +147,15 @@ export function SettingsClient() {
           <section className="technical-border bg-surface-lowest p-6 space-y-5">
             <div className="flex items-start justify-between">
               <div>
-                <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">
+                <p className="font-mono text-[12px] uppercase tracking-widest mb-0.5">
                   Qikink Integration
                 </p>
-                <p className="font-mono text-[10px] text-muted-foreground">
+                <p className="font-mono text-[11px] text-muted-foreground">
                   Print-on-demand fulfillment — paid orders push automatically
                 </p>
               </div>
               <span
-                className={`font-mono text-[10px] px-2 py-0.5 border ${
+                className={`font-mono text-[11px] px-2 py-0.5 border rounded-full ${
                   qikink?.connected
                     ? "bg-secondary/10 text-secondary border-secondary/20"
                     : "bg-tertiary/10 text-tertiary border-tertiary/20"
@@ -169,7 +169,7 @@ export function SettingsClient() {
               </span>
             </div>
 
-            <div className="p-4 bg-surface-container technical-border font-mono text-[10px] space-y-1">
+            <div className="p-4 bg-surface-container technical-border font-mono text-[11px] space-y-1">
               {qikink && (
                 <p className={qikink.connected ? "text-secondary" : "text-tertiary"}>
                   [{qikink.connected ? "OK" : "WARN"}] {qikink.message}
@@ -179,7 +179,7 @@ export function SettingsClient() {
                 [INFO] Status &amp; tracking refresh every 15 min and on order views
               </p>
               <p className="text-muted-foreground">
-                [INFO] Failed pushes auto-retry up to 3x within 24h, then need PUSH_TO_QIKINK
+                [INFO] Failed pushes auto-retry up to 3x within 24h, then need PUSH TO QIKINK
               </p>
               <p className="text-muted-foreground">
                 [INFO] Qikink has no cancel API — cancel pushed orders in dashboard.qikink.com
@@ -191,21 +191,21 @@ export function SettingsClient() {
               <button
                 onClick={refreshQikink}
                 disabled={qikinkBusy !== null}
-                className="technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+                className="technical-border py-2 font-mono text-[12px] hover:border-foreground transition-all disabled:opacity-50"
               >
                 {qikinkBusy === "status" ? "CHECKING..." : "TEST_CONNECTION"}
               </button>
               <button
                 onClick={() => runQikinkSync("products")}
                 disabled={qikinkBusy !== null || !qikink?.connected}
-                className="technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+                className="technical-border py-2 font-mono text-[12px] hover:border-foreground transition-all disabled:opacity-50"
               >
                 {qikinkBusy === "products" ? "CHECKING..." : "CHECK_SKUS"}
               </button>
               <button
                 onClick={() => runQikinkSync("orders")}
                 disabled={qikinkBusy !== null || !qikink?.connected}
-                className="technical-border py-2 font-mono text-[11px] hover:border-foreground transition-all disabled:opacity-50"
+                className="technical-border py-2 font-mono text-[12px] hover:border-foreground transition-all disabled:opacity-50"
               >
                 {qikinkBusy === "orders" ? "SYNCING..." : "SYNC_ORDERS"}
               </button>
@@ -214,10 +214,10 @@ export function SettingsClient() {
 
           {/* Danger Zone */}
           <section className="technical-border bg-surface-lowest p-6 border-destructive/20">
-            <p className="font-mono text-[11px] uppercase tracking-widest text-destructive mb-2">
+            <p className="font-mono text-[12px] uppercase tracking-widest text-destructive mb-2">
               Danger Zone
             </p>
-            <p className="font-mono text-[10px] text-muted-foreground">
+            <p className="font-mono text-[11px] text-muted-foreground">
               [RESERVED — FUTURE DESTRUCTIVE ACTIONS]
             </p>
           </section>

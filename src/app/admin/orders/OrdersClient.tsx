@@ -393,11 +393,11 @@ export function OrdersClient() {
       <main className="ml-64 p-8 md:p-16 min-h-screen">
         <header className="mb-10">
           <div className="flex items-center gap-3 mb-2">
-            <p className="font-mono text-[11px] text-primary uppercase tracking-widest">
+            <p className="font-mono text-[12px] text-gradient uppercase tracking-widest w-fit">
               Operations Dashboard
             </p>
             {isDemo && (
-              <span className="font-mono text-[9px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-tertiary/10 text-tertiary border border-tertiary/30 uppercase tracking-widest">
                 Demo Data
               </span>
             )}
@@ -408,15 +408,15 @@ export function OrdersClient() {
               <button
                 onClick={handleSyncAll}
                 disabled={isDemo || qikinkBusy === "all"}
-                className="technical-border px-3 py-1.5 font-mono text-[11px] flex items-center gap-2 hover:border-foreground transition-all disabled:opacity-40"
+                className="technical-border px-3 py-1.5 font-mono text-[12px] flex items-center gap-2 hover:border-foreground transition-all disabled:opacity-40"
               >
                 <RefreshCw className={`h-3 w-3 ${qikinkBusy === "all" ? "animate-spin" : ""}`} />
-                {qikinkBusy === "all" ? "SYNCING..." : "SYNC_QIKINK"}
+                {qikinkBusy === "all" ? "SYNCING..." : "SYNC QIKINK"}
               </button>
               <button
                 onClick={() => setShowNewOrder(true)}
                 disabled={isDemo}
-                className="bg-foreground text-background px-3 py-1.5 font-mono text-[11px] font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40"
+                className="btn-primary px-3 py-1.5 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40"
               >
                 <Plus className="h-3 w-3" /> NEW ORDER
               </button>
@@ -459,7 +459,7 @@ export function OrdersClient() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`font-mono text-[11px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
+                className={`font-mono text-[12px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
                   filter === f
                     ? "bg-primary text-primary-foreground border-primary"
                     : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
@@ -478,7 +478,7 @@ export function OrdersClient() {
             <thead>
               <tr className="border-b border-border/30 bg-muted/30">
                 {["Reference", "Client", "Total", "Status", "Qikink", "Date", ""].map((h) => (
-                  <th key={h} className="p-4 font-mono text-[11px] text-muted-foreground uppercase">
+                  <th key={h} className="p-4 font-mono text-[12px] text-muted-foreground uppercase">
                     {h}
                   </th>
                 ))}
@@ -506,14 +506,14 @@ export function OrdersClient() {
                   >
                     <td className="p-4 font-mono text-xs text-primary whitespace-nowrap">
                       {order.reference}
-                      <span className="block text-[9px] text-muted-foreground">
+                      <span className="block text-[10px] text-muted-foreground">
                         {PAYMENT_LABEL[order.paymentGateway || "razorpay"] || order.paymentGateway}
                       </span>
                     </td>
                     <td className="p-4 text-sm">
                       {order.client}
                       {(order.email || order.phone) && (
-                        <span className="block font-mono text-[10px] text-muted-foreground">
+                        <span className="block font-mono text-[11px] text-muted-foreground">
                           {[order.email, order.phone].filter(Boolean).join(" · ")}
                         </span>
                       )}
@@ -521,13 +521,13 @@ export function OrdersClient() {
                     <td className="p-4 font-mono text-sm">
                       {money(order.total, order.currency)}
                       {order.couponCode && (
-                        <span className="block text-[9px] text-secondary">{order.couponCode}</span>
+                        <span className="block text-[10px] text-secondary">{order.couponCode}</span>
                       )}
                     </td>
                     <td className="p-4">
                       <OrderStatusBadge status={order.status} />
                     </td>
-                    <td className="p-4 font-mono text-[10px] text-muted-foreground space-y-1">
+                    <td className="p-4 font-mono text-[11px] text-muted-foreground space-y-1">
                       <QikinkStatusBadge
                         status={order.qikinkStatus}
                         awaiting={needsQikinkPush(order)}
@@ -551,13 +551,13 @@ export function OrdersClient() {
                         </a>
                       )}
                     </td>
-                    <td className="p-4 font-mono text-[11px] text-muted-foreground">
+                    <td className="p-4 font-mono text-[12px] text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString()}
                     </td>
                     <td className="p-4">
                       <button
                         onClick={() => void openOrder(order)}
-                        className="font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
+                        className="font-mono text-[12px] text-primary hover:underline flex items-center gap-1"
                       >
                         VIEW <ArrowRight className="h-3 w-3" aria-hidden />
                       </button>
@@ -570,7 +570,7 @@ export function OrdersClient() {
         </div>
 
         {/* Pagination hint */}
-        <div className="flex items-center justify-between font-mono text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between font-mono text-[12px] text-muted-foreground">
           <span>
             {filtered.length} ORDER{filtered.length === 1 ? "" : "S"}
           </span>
@@ -612,7 +612,7 @@ export function OrdersClient() {
               <div className="flex items-center justify-between p-6 border-b border-border/30">
                 <div>
                   <p className="font-mono text-xs text-primary">{selected.reference}</p>
-                  <p className="font-mono text-[10px] text-muted-foreground">
+                  <p className="font-mono text-[11px] text-muted-foreground">
                     {new Date(selected.createdAt).toLocaleString()}
                   </p>
                 </div>
@@ -628,7 +628,7 @@ export function OrdersClient() {
               <div className="p-6 space-y-8 flex-1">
                 {/* Status history */}
                 <div>
-                  <p className="font-mono text-[11px] uppercase tracking-widest mb-3">
+                  <p className="font-mono text-[12px] uppercase tracking-widest mb-3">
                     Status History
                   </p>
                   <div className="space-y-2">
@@ -640,7 +640,7 @@ export function OrdersClient() {
                           {h.note && (
                             <p className="text-xs text-muted-foreground mt-0.5">{h.note}</p>
                           )}
-                          <p className="font-mono text-[10px] text-muted-foreground/60">
+                          <p className="font-mono text-[11px] text-muted-foreground/60">
                             {new Date(h.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -652,7 +652,7 @@ export function OrdersClient() {
                 {/* Line items */}
                 {selected.items.length > 0 && (
                   <div>
-                    <p className="font-mono text-[11px] uppercase tracking-widest mb-3">Items</p>
+                    <p className="font-mono text-[12px] uppercase tracking-widest mb-3">Items</p>
                     <div className="technical-border overflow-hidden">
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -660,7 +660,7 @@ export function OrdersClient() {
                             {["Item", "SKU", "Qty", "Price"].map((h) => (
                               <th
                                 key={h}
-                                className="p-2 font-mono text-[10px] text-muted-foreground"
+                                className="p-2 font-mono text-[11px] text-muted-foreground"
                               >
                                 {h}
                               </th>
@@ -676,7 +676,7 @@ export function OrdersClient() {
                                   {item.size}/{item.color}
                                 </span>
                               </td>
-                              <td className="p-2 font-mono text-[10px] text-muted-foreground">
+                              <td className="p-2 font-mono text-[11px] text-muted-foreground">
                                 {item.sku}
                                 <span
                                   className={`block ${item.qikinkSku ? "" : "text-destructive"}`}
@@ -713,19 +713,19 @@ export function OrdersClient() {
 
                 {/* Shipping */}
                 <div>
-                  <p className="font-mono text-[11px] uppercase tracking-widest mb-2">Shipping</p>
-                  <p className="font-mono text-[11px] text-muted-foreground">
+                  <p className="font-mono text-[12px] uppercase tracking-widest mb-2">Shipping</p>
+                  <p className="font-mono text-[12px] text-muted-foreground">
                     {selected.client} · {selected.shippingCity}, {selected.shippingCountry}
                   </p>
                   {(selected.email || selected.phone) && (
-                    <p className="font-mono text-[11px] text-muted-foreground">
+                    <p className="font-mono text-[12px] text-muted-foreground">
                       {[selected.email, selected.phone].filter(Boolean).join(" · ")}
                     </p>
                   )}
                   {selected.customerId && (
                     <Link
                       href={`/admin/customers?id=${selected.customerId}`}
-                      className="mt-1 inline-block font-mono text-[11px] text-primary hover:underline"
+                      className="mt-1 inline-block font-mono text-[12px] text-primary hover:underline"
                     >
                       VIEW CUSTOMER →
                     </Link>
@@ -734,13 +734,13 @@ export function OrdersClient() {
 
                 {/* Qikink fulfilment */}
                 <div className="p-4 technical-border bg-surface-container space-y-3">
-                  <p className="font-mono text-[11px] uppercase tracking-widest">
+                  <p className="font-mono text-[12px] uppercase tracking-widest">
                     Qikink Fulfilment
                   </p>
-                  <div className="font-mono text-[10px] text-muted-foreground space-y-0.5">
-                    <p>ORDER_ID: {selected.qikinkOrderId || "—"}</p>
+                  <div className="font-mono text-[11px] text-muted-foreground space-y-0.5">
+                    <p>Qikink order: {selected.qikinkOrderId || "—"}</p>
                     <div className="flex items-center gap-2">
-                      STATUS:{" "}
+                      Status:{" "}
                       <QikinkStatusBadge
                         status={selected.qikinkStatus}
                         awaiting={needsQikinkPush(selected)}
@@ -748,15 +748,15 @@ export function OrdersClient() {
                     </div>
                     {(selected.courier || selected.awb) && (
                       <p>
-                        SHIPMENT:{" "}
+                        Shipment:{" "}
                         {[selected.courier, selected.awb && `AWB ${selected.awb}`]
                           .filter(Boolean)
                           .join(" · ")}
                       </p>
                     )}
-                    <p>ATTEMPTS: {selected.qikinkAttempts ?? 0}</p>
+                    <p>Attempts: {selected.qikinkAttempts ?? 0}</p>
                     <p>
-                      LAST_SYNC:{" "}
+                      Last sync:{" "}
                       {selected.qikinkSyncedAt
                         ? new Date(selected.qikinkSyncedAt).toLocaleString()
                         : "—"}
@@ -767,18 +767,18 @@ export function OrdersClient() {
                       href={selected.trackingLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-mono text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+                      className="font-mono text-[12px] text-primary hover:underline inline-flex items-center gap-1"
                     >
                       <Truck className="h-3 w-3" aria-hidden /> OPEN TRACKING
                       <ExternalLink className="h-3 w-3" aria-hidden />
                     </a>
                   )}
                   {selected.qikinkError && !notice && (
-                    <p className="font-mono text-[11px] text-destructive">{selected.qikinkError}</p>
+                    <p className="font-mono text-[12px] text-destructive">{selected.qikinkError}</p>
                   )}
                   {notice && (
                     <p
-                      className={`font-mono text-[11px] ${notice.tone === "error" ? "text-destructive" : "text-primary"}`}
+                      className={`font-mono text-[12px] ${notice.tone === "error" ? "text-destructive" : "text-primary"}`}
                     >
                       {notice.text}
                     </p>
@@ -787,26 +787,26 @@ export function OrdersClient() {
                     <button
                       onClick={handlePushToQikink}
                       disabled={isDemo || qikinkBusy !== null}
-                      className="w-full bg-primary text-primary-foreground py-2 font-mono text-[11px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
+                      className="w-full bg-primary text-primary-foreground py-2 font-mono text-[12px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
                     >
                       {qikinkBusy === "push" ? <Spinner /> : <Send className="h-3 w-3" />}
-                      {qikinkBusy === "push" ? "PUSHING..." : "PUSH_TO_QIKINK"}
+                      {qikinkBusy === "push" ? "PUSHING..." : "PUSH TO QIKINK"}
                     </button>
                   )}
                   {selected.qikinkOrderId && (
                     <button
                       onClick={handleSyncFromQikink}
                       disabled={isDemo || qikinkBusy !== null}
-                      className="w-full technical-border py-2 font-mono text-[11px] flex items-center justify-center gap-2 hover:border-foreground transition-all disabled:opacity-50"
+                      className="w-full technical-border py-2 font-mono text-[12px] flex items-center justify-center gap-2 hover:border-foreground transition-all disabled:opacity-50"
                     >
                       <RefreshCw
                         className={`h-3 w-3 ${qikinkBusy === "sync" ? "animate-spin" : ""}`}
                       />
-                      {qikinkBusy === "sync" ? "SYNCING..." : "SYNC_STATUS"}
+                      {qikinkBusy === "sync" ? "SYNCING..." : "SYNC STATUS"}
                     </button>
                   )}
                   {!needsQikinkPush(selected) && !selected.qikinkOrderId && (
-                    <p className="font-mono text-[10px] text-muted-foreground">
+                    <p className="font-mono text-[11px] text-muted-foreground">
                       Pushed automatically once the order is paid.
                     </p>
                   )}
@@ -814,7 +814,7 @@ export function OrdersClient() {
 
                 {/* Status update */}
                 <div className="p-4 technical-border bg-surface-container space-y-3">
-                  <p className="font-mono text-[11px] uppercase tracking-widest">Update Status</p>
+                  <p className="font-mono text-[12px] uppercase tracking-widest">Update Status</p>
                   <select
                     value={newStatus}
                     onChange={(e) => setNewStatus(e.target.value as AdminOrder["status"])}
@@ -829,7 +829,7 @@ export function OrdersClient() {
                     )}
                   </select>
                   {newStatus === "cancelled" && selected.qikinkOrderId && (
-                    <p className="font-mono text-[10px] text-destructive">
+                    <p className="font-mono text-[11px] text-destructive">
                       Qikink has no cancel API — also cancel order {selected.qikinkOrderId} in the
                       Qikink dashboard.
                     </p>
@@ -843,7 +843,7 @@ export function OrdersClient() {
                   <button
                     onClick={handleUpdateStatus}
                     disabled={updatingId === selected.id}
-                    className="w-full bg-secondary text-secondary-foreground py-2 font-mono text-[11px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
+                    className="w-full btn-primary py-2 font-mono text-[12px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
                   >
                     {updatingId === selected.id ? <Spinner /> : <Save className="h-3 w-3" />}
                     {updatingId === selected.id ? "UPDATING..." : "UPDATE STATUS"}

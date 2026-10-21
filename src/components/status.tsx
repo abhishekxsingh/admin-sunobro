@@ -19,7 +19,7 @@ import type { AdminOrder, AdminProduct } from "@/lib/api/types";
 type Tone = { icon: LucideIcon; label: string; className: string };
 
 const badgeBase =
-  "inline-flex items-center gap-1 whitespace-nowrap font-mono text-[10px] px-2 py-0.5 border";
+  "inline-flex items-center gap-1 whitespace-nowrap font-mono text-[11px] px-2 py-0.5 border rounded-full";
 
 export const ORDER_STATUS: Record<AdminOrder["status"], Tone> = {
   pending: {
@@ -35,7 +35,7 @@ export const ORDER_STATUS: Record<AdminOrder["status"], Tone> = {
   shipped: {
     icon: Truck,
     label: "SHIPPED",
-    className: "bg-primary/10 text-primary border-primary/20",
+    className: "bg-info/10 text-info border-info/25",
   },
   delivered: {
     icon: PackageCheck,
@@ -123,7 +123,7 @@ export function QikinkStatusBadge({
         }
       : null;
   if (!tone)
-    return <span className="font-mono text-[10px] text-muted-foreground">{status || "—"}</span>;
+    return <span className="font-mono text-[11px] text-muted-foreground">{status || "—"}</span>;
   const Icon = tone.icon;
   return (
     <span className={`${badgeBase} ${tone.className}`}>
