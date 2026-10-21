@@ -138,6 +138,9 @@ const fromQueueOrder = (q: QueueOrder): AdminOrder => ({
   status: q.status,
   client: q.client,
   total: q.value,
+  subtotal: q.subtotal,
+  discount: q.discount,
+  couponCode: q.couponCode,
   currency: q.currency,
   items: q.items || [],
   statusHistory: [],
@@ -471,7 +474,12 @@ export function OrdersClient() {
                       </span>
                     </td>
                     <td className="p-4 text-sm">{order.client}</td>
-                    <td className="p-4 font-mono text-sm">{money(order.total, order.currency)}</td>
+                    <td className="p-4 font-mono text-sm">
+                      {money(order.total, order.currency)}
+                      {order.couponCode && (
+                        <span className="block text-[9px] text-secondary">{order.couponCode}</span>
+                      )}
+                    </td>
                     <td className="p-4">
                       <OrderStatusBadge status={order.status} />
                     </td>
@@ -641,6 +649,17 @@ export function OrdersClient() {
                         </tbody>
                       </table>
                     </div>
+                    {(selected.discount ?? 0) > 0 && (
+                      <div className="text-right mt-2 font-mono text-xs text-muted-foreground space-y-0.5">
+                        <p>
+                          Subtotal: {money(selected.subtotal ?? selected.total, selected.currency)}
+                        </p>
+                        <p className="text-secondary">
+                          Coupon {selected.couponCode}: −
+                          {money(selected.discount ?? 0, selected.currency)}
+                        </p>
+                      </div>
+                    )}
                     <div className="text-right mt-2 font-mono text-sm">
                       Total:{" "}
                       <span className="font-bold">{money(selected.total, selected.currency)}</span>

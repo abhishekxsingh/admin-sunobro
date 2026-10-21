@@ -1,5 +1,9 @@
 import { api } from "./client";
 import type {
+  Coupon,
+  CouponCustomer,
+  CouponPayload,
+  CouponRedemption,
   AdminCreateOrderPayload,
   AdminLoginPayload,
   AdminOrder,
@@ -89,4 +93,14 @@ export const adminProfileApi = {
   update: (payload: AdminProfileUpdatePayload) => api.put<AdminUser>("/admin/profile", payload),
   changePassword: (payload: ChangePasswordPayload) =>
     api.put<void>("/admin/profile/password", payload),
+};
+
+export const adminCouponsApi = {
+  list: () => api.get<Coupon[]>("/admin/coupons"),
+  create: (payload: CouponPayload) => api.post<Coupon>("/admin/coupons", payload),
+  update: (id: string, payload: CouponPayload) => api.put<Coupon>(`/admin/coupons/${id}`, payload),
+  remove: (id: string) => api.delete<void>(`/admin/coupons/${id}`),
+  redemptions: (id: string) => api.get<CouponRedemption[]>(`/admin/coupons/${id}/redemptions`),
+  searchCustomers: (q: string) =>
+    api.get<CouponCustomer[]>(`/admin/customers/search?q=${encodeURIComponent(q)}`),
 };
