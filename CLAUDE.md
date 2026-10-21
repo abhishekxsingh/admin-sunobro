@@ -22,12 +22,12 @@ src/
 │   │   ├── page.tsx + AdminDashboardClient.tsx   stats cards + quick-nav
 │   │   ├── orders/      OrdersClient.tsx          order queue + SYNC_QIKINK + NEW ORDER; drawer loads full detail, PUSH_TO_QIKINK / SYNC_STATUS, cancel warning
 │   │   │                NewOrderPanel.tsx         admin-created orders: product/variant picker, shipping, prepaid vs COD, push now
-│   │   ├── products/    ProductsClient.tsx        product form (size × colour grid: Store SKU + colour image per row; status review/draft/active); PRODUCT SHEET download + IMPORT SHEET
+│   │   ├── products/    ProductsClient.tsx        product form (size × colour grid: Store SKU + colour image per row; ADD COLOUR block also adds missing sizes to an existing colour — saved with SAVE PRODUCT; status review/draft/active); PRODUCT SHEET download + IMPORT SHEET
 │   │   │                ProductCatalogTable.tsx   ALL / IN REVIEW / LIVE / DRAFT tabs, click-to-rename, PUBLISH/UNPUBLISH, expand → colours (image + on/off switch) → size chips (on/off)
 │   │   │                SheetImportPanel.tsx      upload .xlsx → server preview (dryRun) → APPLY IMPORT
 │   │   │                QikinkExportPanel.tsx     step 1: upload Qikink My Products CSV → preview → products in review
 │   │   │                VariationsPanel.tsx       step 2 (per product): paste Product Variations table + image link per colour → READ TABLE → SAVE
-│   │   │                ColourEditors.tsx         manual entry inside the expanded row: ADD COLOUR (name + image + Store SKU per size; sizes from the Qikink size range; paste a SKU column into the first box), + SIZE on a colour card, click a thumbnail to change that colour's image (POST /admin/products/:id/variants, PUT …/colour-image)
+│   │   │                ColourEditors.tsx         ColourEntryForm (shared with the edit form) + manual entry inside the expanded row: ADD COLOUR (name + image + Store SKU per size; sizes from the Qikink size range; paste a SKU column into the first box), + SIZE on a colour card, click a thumbnail to change that colour's image (POST /admin/products/:id/variants, PUT …/colour-image)
 │   │   ├── inventory/   InventoryClient.tsx       per-variant stock (CRITICAL ≤5 / LOW ≤20 / OPTIMAL)
 │   │   ├── settings/    SettingsClient.tsx        store settings (display only); live Qikink status, CHECK_SKUS, SYNC_ORDERS
 │   │   ├── profile/     ProfileClient.tsx         identity from /admin/auth/me, edit + password change
