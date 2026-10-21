@@ -527,6 +527,12 @@ export function ProductsClient() {
           >
             <p className="font-mono text-[11px] uppercase tracking-widest">
               {view === "create" ? "New Product" : `Edit: ${editTarget?.name}`}
+              {view === "edit" && editTarget?.qikink?.productId && (
+                <span className="ml-3 normal-case tracking-normal text-primary">
+                  Qikink #{editTarget.qikink.productId}
+                  {editTarget.qikink.design ? ` · ${editTarget.qikink.design}` : ""}
+                </span>
+              )}
             </p>
 
             {/* Storefront listing */}
