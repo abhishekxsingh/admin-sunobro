@@ -401,7 +401,7 @@ export function CouponsClient() {
                           )}
                           {c.showAtCheckout && c.kind !== "customer" && (
                             <p className="mt-0.5 font-mono text-[10px] text-muted-foreground">
-                              shown at checkout
+                              suggested on website
                             </p>
                           )}
                         </td>

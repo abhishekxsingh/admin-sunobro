@@ -23,7 +23,7 @@ export const KINDS: { key: CouponKind; label: string; hint: string; icon: Lucide
   {
     key: "festival",
     label: "Festival",
-    hint: "Diwali, Holi, Eid… — listed at checkout",
+    hint: "Diwali, Holi, Eid… — suggested on the website",
     icon: Sparkles,
   },
   {
@@ -568,7 +568,8 @@ export function CouponForm({
               checked={f.showAtCheckout}
               onChange={(e) => set("showAtCheckout", e.target.checked)}
             />
-            SHOW AT CHECKOUT AS AN OFFER (otherwise only people with the code can use it)
+            SUGGEST ON THE WEBSITE (offer pop-up, product pages, checkout) — otherwise only people
+            with the code can use it
           </label>
         )}
         <label className="flex items-center gap-2">
@@ -590,8 +591,8 @@ export function CouponForm({
       </div>
       {f.kind === "customer" && (
         <p className="font-mono text-[10px] text-muted-foreground -mt-3">
-          Customer coupons always appear in those customers&apos; checkout offers; other shoppers
-          never see them.
+          Customer coupons are always suggested to those customers when they are logged in (offer
+          pop-up, product pages, checkout); other shoppers never see them.
         </p>
       )}
 
