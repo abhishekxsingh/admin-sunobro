@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowRight,
@@ -16,6 +17,7 @@ import {
   Plus,
   RefreshCw,
   Save,
+  Search,
   Send,
   Truck,
   X,
@@ -138,6 +140,9 @@ const fromQueueOrder = (q: QueueOrder): AdminOrder => ({
   status: q.status,
   client: q.client,
   total: q.value,
+  customerId: q.customerId,
+  email: q.email,
+  phone: q.phone,
   subtotal: q.subtotal,
   discount: q.discount,
   couponCode: q.couponCode,
@@ -183,6 +188,9 @@ export function OrdersClient() {
   const [loggingOut, setLoggingOut] = useState(false);
   const [adminUser, setAdminUser] = useState<AdminUser | null>(null);
   const [filter, setFilter] = useState<StatusFilter>("all");
+  const searchParams = useSearchParams();
+  const [query, setQuery] = useState(() => searchParams.get("q") || "");
+  const [searching, setSearching] = useState(false);
   const [selected, setSelected] = useState<AdminOrder | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<AdminOrder["status"]>("pending");
@@ -191,14 +199,19 @@ export function OrdersClient() {
   const [notice, setNotice] = useState<{ tone: "info" | "error"; text: string } | null>(null);
   const [showNewOrder, setShowNewOrder] = useState(false);
 
-  const loadOrders = useCallback(async () => {
+  // Search runs on the server across every order (not just the loaded page):
+  // reference, name, email, phone, product, SKU, colour, AWB, coupon, city/PIN.
+  const loadOrders = useCallback(async (q = "", status: StatusFilter = "all") => {
+    setSearching(true);
     try {
-      const liveOrders = await adminApi.orders();
+      const liveOrders = await adminApi.orders({ q, status });
       setOrders(liveOrders.map((order) => fromQueueOrder(order)));
       setIsDemo(false);
     } catch {
       setOrders(DEMO_ORDERS);
       setIsDemo(true);
+    } finally {
+      setSearching(false);
     }
   }, []);
 
@@ -214,12 +227,15 @@ export function OrdersClient() {
         /* backend offline */
       });
 
-    void loadOrders();
-
     return () => {
       cancelled = true;
     };
-  }, [router, loadOrders]);
+  }, [router]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => void loadOrders(query, filter), query ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [query, filter, loadOrders]);
 
   useEffect(() => {
     if (!selected) return;
@@ -418,6 +434,23 @@ export function OrdersClient() {
           />
         )}
 
+        {/* Search */}
+        <div className="relative mb-4 max-w-xl">
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search orders"
+            placeholder="Search ref, name, email, phone, product, SKU, colour, AWB, coupon…"
+            className="w-full bg-surface-lowest technical-border py-2 pl-9 pr-9 text-sm"
+          />
+          {searching && (
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <Spinner />
+            </span>
+          )}
+        </div>
+
         {/* Filter bar */}
         <div className="flex gap-2 mb-6 flex-wrap">
           {(["all", "pending", "paid", "shipped", "delivered", "cancelled"] as const).map((f) => {
@@ -458,7 +491,11 @@ export function OrdersClient() {
                     colSpan={7}
                     className="p-8 text-center font-mono text-xs text-muted-foreground"
                   >
-                    <EmptyState icon={Inbox}>NO ORDERS MATCHING FILTER</EmptyState>
+                    <EmptyState icon={Inbox}>
+                      {query.trim()
+                        ? `NO ORDERS MATCH “${query.trim()}”`
+                        : "NO ORDERS MATCHING FILTER"}
+                    </EmptyState>
                   </td>
                 </tr>
               ) : (
@@ -473,7 +510,14 @@ export function OrdersClient() {
                         {PAYMENT_LABEL[order.paymentGateway || "razorpay"] || order.paymentGateway}
                       </span>
                     </td>
-                    <td className="p-4 text-sm">{order.client}</td>
+                    <td className="p-4 text-sm">
+                      {order.client}
+                      {(order.email || order.phone) && (
+                        <span className="block font-mono text-[10px] text-muted-foreground">
+                          {[order.email, order.phone].filter(Boolean).join(" · ")}
+                        </span>
+                      )}
+                    </td>
                     <td className="p-4 font-mono text-sm">
                       {money(order.total, order.currency)}
                       {order.couponCode && (
@@ -673,6 +717,19 @@ export function OrdersClient() {
                   <p className="font-mono text-[11px] text-muted-foreground">
                     {selected.client} · {selected.shippingCity}, {selected.shippingCountry}
                   </p>
+                  {(selected.email || selected.phone) && (
+                    <p className="font-mono text-[11px] text-muted-foreground">
+                      {[selected.email, selected.phone].filter(Boolean).join(" · ")}
+                    </p>
+                  )}
+                  {selected.customerId && (
+                    <Link
+                      href={`/admin/customers?id=${selected.customerId}`}
+                      className="mt-1 inline-block font-mono text-[11px] text-primary hover:underline"
+                    >
+                      VIEW CUSTOMER →
+                    </Link>
+                  )}
                 </div>
 
                 {/* Qikink fulfilment */}
