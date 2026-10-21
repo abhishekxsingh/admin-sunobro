@@ -1,7 +1,25 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
-import { ChevronDown, ChevronRight, ImageOff, Pencil } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  EyeOff,
+  Globe,
+  ImageOff,
+  ImagePlus,
+  LayoutGrid,
+  Layers,
+  Link2,
+  Link2Off,
+  PackageOpen,
+  Pencil,
+  ScanSearch,
+  SquarePen,
+  Trash2,
+  type LucideIcon,
+} from "lucide-react";
+import { EmptyState, ProductStatusBadge, Spinner } from "@/components/status";
 import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct, ProductVariant } from "@/lib/api/types";
@@ -11,12 +29,15 @@ import { AddColourCard, AddSizeInline, ColourImageEditor } from "./ColourEditors
 type Status = AdminProduct["status"];
 type Filter = "all" | Status;
 
-const STATUS_LABEL: Record<Status, string> = { review: "REVIEW", active: "LIVE", draft: "DRAFT" };
-const STATUS_TONE: Record<Status, string> = {
-  review: "bg-tertiary/10 text-tertiary border-tertiary/30",
-  active: "bg-secondary/10 text-secondary border-secondary/20",
-  draft: "border-border/40 text-muted-foreground",
-};
+const TABS: [Filter, string, LucideIcon][] = [
+  ["all", "ALL", LayoutGrid],
+  ["review", "IN REVIEW", ScanSearch],
+  ["active", "LIVE", Globe],
+  ["draft", "DRAFT", EyeOff],
+];
+
+const action =
+  "inline-flex items-center gap-1 font-mono text-[11px] hover:underline disabled:opacity-50";
 
 const money = (n: number, cur = "INR") =>
   `${cur === "INR" ? "₹" : "$"}${n.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
@@ -160,9 +181,13 @@ function ProductOptions({
                   type="button"
                   onClick={() => setEditingImage(editingImage === color ? null : color)}
                   title={`Change the ${color} image`}
-                  className="shrink-0 hover:opacity-80"
+                  aria-label={`Change the ${color} image`}
+                  className="group relative shrink-0"
                 >
                   <Thumb src={image} alt={`${product.name} in ${color}`} size="h-12 w-12" />
+                  <span className="absolute inset-0 flex items-center justify-center bg-background/70 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                    <ImagePlus className="h-4 w-4" aria-hidden />
+                  </span>
                 </button>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{color}</p>
@@ -284,25 +309,19 @@ export function ProductCatalogTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter products by status">
-        {(
-          [
-            ["all", "ALL"],
-            ["review", "IN REVIEW"],
-            ["active", "LIVE"],
-            ["draft", "DRAFT"],
-          ] as const
-        ).map(([key, label]) => (
+        {TABS.map(([key, label, Icon]) => (
           <button
             key={key}
             role="tab"
             aria-selected={filter === key}
             onClick={() => setFilter(key)}
-            className={`font-mono text-[11px] px-3 py-1.5 border transition-all ${
+            className={`font-mono text-[11px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
               filter === key
                 ? "bg-primary text-primary-foreground border-primary"
                 : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
             }`}
           >
+            <Icon className="h-3 w-3" aria-hidden />
             {label} · {counts[key]}
           </button>
         ))}
@@ -325,10 +344,12 @@ export function ProductCatalogTable({
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center font-mono text-xs text-muted-foreground">
-                  {products.length === 0
-                    ? "NO PRODUCTS YET — ADD ONE OR IMPORT THE PRODUCT SHEET"
-                    : "NOTHING IN THIS LIST"}
+                <td colSpan={7} className="p-8">
+                  <EmptyState icon={PackageOpen}>
+                    {products.length === 0
+                      ? "NO PRODUCTS YET — UPLOAD THE QIKINK EXPORT OR ADD ONE"
+                      : "NOTHING IN THIS LIST"}
+                  </EmptyState>
                 </td>
               </tr>
             ) : (
@@ -393,11 +414,7 @@ export function ProductCatalogTable({
                         </div>
                       </td>
                       <td className="p-4">
-                        <span
-                          className={`font-mono text-[10px] px-2 py-0.5 border ${STATUS_TONE[product.status]}`}
-                        >
-                          {STATUS_LABEL[product.status]}
-                        </span>
+                        <ProductStatusBadge status={product.status} />
                       </td>
                       <td className="p-4 font-mono text-sm">
                         {money(product.price, product.currency)}
@@ -426,12 +443,22 @@ export function ProductCatalogTable({
                           </span>
                         ) : (
                           <span
-                            className={`font-mono text-[10px] px-2 py-0.5 border ${
+                            title={
+                              mappedOk
+                                ? "Every switched-on option has a Qikink Store SKU"
+                                : "Some switched-on options have no Qikink Store SKU — they can't be printed"
+                            }
+                            className={`inline-flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 border ${
                               mappedOk
                                 ? "bg-secondary/10 text-secondary border-secondary/20"
                                 : "bg-destructive/10 text-destructive border-destructive/20"
                             }`}
                           >
+                            {mappedOk ? (
+                              <Link2 className="h-3 w-3" aria-hidden />
+                            ) : (
+                              <Link2Off className="h-3 w-3" aria-hidden />
+                            )}
                             {mappedOk ? "MAPPED" : "UNMAPPED"} {product.mappedCount}/{enabled}
                           </span>
                         )}
@@ -442,43 +469,52 @@ export function ProductCatalogTable({
                             <button
                               onClick={() => void save(product, { status: "draft" })}
                               disabled={busyId === product.id}
-                              className="font-mono text-[11px] text-muted-foreground hover:text-foreground disabled:opacity-50"
+                              className={`${action} text-muted-foreground hover:text-foreground`}
                             >
+                              {busyId === product.id ? <Spinner /> : <EyeOff className="h-3 w-3" />}
                               UNPUBLISH
                             </button>
                           ) : (
                             <button
                               onClick={() => void save(product, { status: "active" })}
                               disabled={busyId === product.id}
-                              className="font-mono text-[11px] font-bold text-secondary hover:underline disabled:opacity-50"
+                              className={`${action} font-bold text-secondary`}
                             >
-                              {busyId === product.id ? "…" : "PUBLISH"}
+                              {busyId === product.id ? <Spinner /> : <Globe className="h-3 w-3" />}
+                              PUBLISH
                             </button>
                           )}
                           <button
                             onClick={() =>
                               setVariationsFor(variationsFor === product.id ? null : product.id)
                             }
-                            className={`font-mono text-[11px] hover:underline ${
+                            className={`${action} ${
                               product.variantCount === 0
                                 ? "font-bold text-tertiary"
                                 : "text-primary"
                             }`}
                           >
+                            <Layers className="h-3 w-3" />
                             {product.variantCount === 0 ? "ADD VARIATIONS" : "VARIATIONS"}
                           </button>
                           <button
                             onClick={() => onEdit(product)}
-                            className="font-mono text-[11px] text-primary hover:underline"
+                            className={`${action} text-primary`}
                           >
+                            <SquarePen className="h-3 w-3" />
                             EDIT
                           </button>
                           <button
                             onClick={() => onDelete(product)}
                             disabled={deletingId === product.id}
-                            className="font-mono text-[11px] text-destructive hover:underline disabled:opacity-50"
+                            className={`${action} text-destructive`}
                           >
-                            {deletingId === product.id ? "…" : "DELETE"}
+                            {deletingId === product.id ? (
+                              <Spinner />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                            DELETE
                           </button>
                         </div>
                         {rowError?.id === product.id && (

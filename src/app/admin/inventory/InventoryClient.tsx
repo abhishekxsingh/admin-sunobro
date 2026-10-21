@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boxes, Cable, CircuitBoard, MemoryStick, RefreshCw } from "lucide-react";
+import { RefreshCw, Shirt } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { adminApi, adminAuthApi } from "@/lib/api/endpoints";
 import type { AdminUser, InventoryItem } from "@/lib/api/types";
@@ -15,7 +15,7 @@ const DEMO_INVENTORY: InventoryItem[] = [
   { sku: "SB-CAP-WHT-OS", name: "Circuit Cap / White / One Size", stock: 3, status: "CRITICAL" },
 ];
 
-const INVENTORY_ICONS = [MemoryStick, Cable, CircuitBoard, Boxes, MemoryStick];
+const INVENTORY_ICONS = [Shirt];
 
 const statusTone = (status: InventoryItem["status"]) =>
   status === "ON_DEMAND"

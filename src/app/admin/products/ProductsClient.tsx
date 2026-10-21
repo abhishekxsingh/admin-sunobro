@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, FileSpreadsheet, Plus, Trash2, Upload, Wand2 } from "lucide-react";
+import { Download, FileSpreadsheet, Plus, Save, Trash2, Upload, Wand2 } from "lucide-react";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, adminProductsApi } from "@/lib/api/endpoints";
@@ -10,6 +10,7 @@ import type { AdminProduct, AdminUser } from "@/lib/api/types";
 import { SheetImportPanel } from "./SheetImportPanel";
 import { QikinkExportPanel } from "./QikinkExportPanel";
 import { ProductCatalogTable } from "./ProductCatalogTable";
+import { Spinner } from "@/components/status";
 import { ColourEntryForm, SIZE_LADDER, sizesFor, type ColourEntry } from "./ColourEditors";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
@@ -861,8 +862,9 @@ export function ProductsClient() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                  className="bg-secondary text-secondary-foreground px-4 py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-2"
                 >
+                  {saving ? <Spinner /> : <Save className="h-3 w-3" aria-hidden />}
                   {saving ? "SAVING..." : "SAVE PRODUCT"}
                 </button>
               </div>

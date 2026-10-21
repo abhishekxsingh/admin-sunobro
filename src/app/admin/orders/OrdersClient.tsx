@@ -3,7 +3,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, Plus, RefreshCw, Send, X } from "lucide-react";
+import {
+  ArrowRight,
+  BadgeIndianRupee,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  ExternalLink,
+  Inbox,
+  ListFilter,
+  PackageCheck,
+  Plus,
+  RefreshCw,
+  Save,
+  Send,
+  Truck,
+  X,
+  CircleX,
+} from "lucide-react";
+import { EmptyState, OrderStatusBadge, QikinkStatusBadge, Spinner } from "@/components/status";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminApi, adminAuthApi, qikinkApi } from "@/lib/api/endpoints";
@@ -102,12 +120,13 @@ const DEMO_ORDERS: AdminOrder[] = [
 
 type StatusFilter = "all" | "pending" | "paid" | "shipped" | "delivered" | "cancelled";
 
-const STATUS_BADGE: Record<AdminOrder["status"], string> = {
-  pending: "bg-tertiary/10 text-tertiary border-tertiary/20",
-  paid: "bg-primary/10 text-primary border-primary/20",
-  shipped: "bg-primary/10 text-primary border-primary/20",
-  delivered: "bg-secondary/10 text-secondary border-secondary/20",
-  cancelled: "bg-destructive/10 text-destructive border-destructive/20",
+const FILTER_ICON: Record<StatusFilter, typeof Clock> = {
+  all: ListFilter,
+  pending: Clock,
+  paid: BadgeIndianRupee,
+  shipped: Truck,
+  delivered: PackageCheck,
+  cancelled: CircleX,
 };
 
 const money = (n: number, cur = "INR") =>
@@ -398,19 +417,23 @@ export function OrdersClient() {
 
         {/* Filter bar */}
         <div className="flex gap-2 mb-6 flex-wrap">
-          {(["all", "pending", "paid", "shipped", "delivered", "cancelled"] as const).map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`font-mono text-[11px] px-3 py-1.5 border transition-all ${
-                filter === f
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
-              }`}
-            >
-              {f.toUpperCase()}
-            </button>
-          ))}
+          {(["all", "pending", "paid", "shipped", "delivered", "cancelled"] as const).map((f) => {
+            const Icon = FILTER_ICON[f];
+            return (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`font-mono text-[11px] px-3 py-1.5 border transition-all flex items-center gap-1.5 ${
+                  filter === f
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "border-border/40 text-muted-foreground hover:border-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3 w-3" aria-hidden />
+                {f.toUpperCase()}
+              </button>
+            );
+          })}
         </div>
 
         {/* Orders table */}
@@ -432,7 +455,7 @@ export function OrdersClient() {
                     colSpan={7}
                     className="p-8 text-center font-mono text-xs text-muted-foreground"
                   >
-                    NO ORDERS MATCHING FILTER
+                    <EmptyState icon={Inbox}>NO ORDERS MATCHING FILTER</EmptyState>
                   </td>
                 </tr>
               ) : (
@@ -450,32 +473,29 @@ export function OrdersClient() {
                     <td className="p-4 text-sm">{order.client}</td>
                     <td className="p-4 font-mono text-sm">{money(order.total, order.currency)}</td>
                     <td className="p-4">
-                      <span
-                        className={`font-mono text-[10px] px-2 py-0.5 border ${STATUS_BADGE[order.status]}`}
-                      >
-                        {order.status.toUpperCase()}
-                      </span>
+                      <OrderStatusBadge status={order.status} />
                     </td>
-                    <td
-                      className={`p-4 font-mono text-[10px] ${needsQikinkPush(order) ? "text-destructive" : "text-muted-foreground"}`}
-                    >
-                      {needsQikinkPush(order) && <span className="block">NOT_ON_QIKINK</span>}
-                      <span
-                        className="block max-w-xs line-clamp-2"
-                        title={order.qikinkError || order.qikinkStatus || ""}
-                      >
-                        {order.qikinkError ||
-                          order.qikinkStatus ||
-                          (needsQikinkPush(order) ? "Awaiting push" : "—")}
-                      </span>
+                    <td className="p-4 font-mono text-[10px] text-muted-foreground space-y-1">
+                      <QikinkStatusBadge
+                        status={order.qikinkStatus}
+                        awaiting={needsQikinkPush(order)}
+                      />
+                      {order.qikinkError && (
+                        <span
+                          className="block max-w-xs line-clamp-2 text-destructive"
+                          title={order.qikinkError}
+                        >
+                          {order.qikinkError}
+                        </span>
+                      )}
                       {order.trackingLink && (
                         <a
                           href={order.trackingLink}
                           target="_blank"
                           rel="noreferrer"
-                          className="block text-primary hover:underline"
+                          className="flex items-center gap-1 text-primary hover:underline"
                         >
-                          Track
+                          <Truck className="h-3 w-3" aria-hidden /> Track
                         </a>
                       )}
                     </td>
@@ -485,9 +505,9 @@ export function OrdersClient() {
                     <td className="p-4">
                       <button
                         onClick={() => void openOrder(order)}
-                        className="font-mono text-[11px] text-primary hover:underline"
+                        className="font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
                       >
-                        VIEW →
+                        VIEW <ArrowRight className="h-3 w-3" aria-hidden />
                       </button>
                     </td>
                   </tr>
@@ -546,6 +566,7 @@ export function OrdersClient() {
                 </div>
                 <button
                   onClick={() => setSelected(null)}
+                  aria-label="Close order"
                   className="text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <X className="h-5 w-5" />
@@ -563,11 +584,7 @@ export function OrdersClient() {
                       <div key={i} className="flex gap-3 items-start">
                         <div className="w-2 h-2 rounded-full bg-primary mt-1.5 shrink-0" />
                         <div>
-                          <span
-                            className={`font-mono text-[10px] px-1.5 py-0.5 border ${STATUS_BADGE[h.status as AdminOrder["status"]] || "border-border/30"}`}
-                          >
-                            {h.status.toUpperCase()}
-                          </span>
+                          <OrderStatusBadge status={h.status} />
                           {h.note && (
                             <p className="text-xs text-muted-foreground mt-0.5">{h.note}</p>
                           )}
@@ -646,7 +663,13 @@ export function OrdersClient() {
                   </p>
                   <div className="font-mono text-[10px] text-muted-foreground space-y-0.5">
                     <p>ORDER_ID: {selected.qikinkOrderId || "—"}</p>
-                    <p>STATUS: {selected.qikinkStatus || "—"}</p>
+                    <div className="flex items-center gap-2">
+                      STATUS:{" "}
+                      <QikinkStatusBadge
+                        status={selected.qikinkStatus}
+                        awaiting={needsQikinkPush(selected)}
+                      />
+                    </div>
                     {(selected.courier || selected.awb) && (
                       <p>
                         SHIPMENT:{" "}
@@ -668,9 +691,10 @@ export function OrdersClient() {
                       href={selected.trackingLink}
                       target="_blank"
                       rel="noreferrer"
-                      className="font-mono text-[11px] text-primary hover:underline inline-block"
+                      className="font-mono text-[11px] text-primary hover:underline inline-flex items-center gap-1"
                     >
-                      OPEN TRACKING →
+                      <Truck className="h-3 w-3" aria-hidden /> OPEN TRACKING
+                      <ExternalLink className="h-3 w-3" aria-hidden />
                     </a>
                   )}
                   {selected.qikinkError && !notice && (
@@ -689,7 +713,7 @@ export function OrdersClient() {
                       disabled={isDemo || qikinkBusy !== null}
                       className="w-full bg-primary text-primary-foreground py-2 font-mono text-[11px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
                     >
-                      <Send className="h-3 w-3" />
+                      {qikinkBusy === "push" ? <Spinner /> : <Send className="h-3 w-3" />}
                       {qikinkBusy === "push" ? "PUSHING..." : "PUSH_TO_QIKINK"}
                     </button>
                   )}
@@ -743,8 +767,9 @@ export function OrdersClient() {
                   <button
                     onClick={handleUpdateStatus}
                     disabled={updatingId === selected.id}
-                    className="w-full bg-secondary text-secondary-foreground py-2 font-mono text-[11px] font-bold hover:opacity-90 transition-all disabled:opacity-50"
+                    className="w-full bg-secondary text-secondary-foreground py-2 font-mono text-[11px] font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-50"
                   >
+                    {updatingId === selected.id ? <Spinner /> : <Save className="h-3 w-3" />}
                     {updatingId === selected.id ? "UPDATING..." : "UPDATE STATUS"}
                   </button>
                 </div>
