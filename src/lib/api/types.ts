@@ -33,6 +33,9 @@ export type QueueOrder = {
   ref: string;
   client: string;
   value: number;
+  subtotal?: number;
+  discount?: number;
+  couponCode?: string | null;
   currency: string;
   status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
@@ -191,6 +194,9 @@ export type AdminOrder = {
   status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
   client: string;
   total: number;
+  subtotal?: number;
+  discount?: number;
+  couponCode?: string | null;
   currency: string;
   items: OrderLineItem[];
   statusHistory: StatusHistoryEntry[];
@@ -229,6 +235,7 @@ export type AdminCreateOrderPayload = {
   };
   paymentMethod: "prepaid" | "cod";
   note?: string;
+  couponCode?: string;
   pushToQikink?: boolean;
 };
 
@@ -246,4 +253,64 @@ export type AdminProfileUpdatePayload = {
 export type ChangePasswordPayload = {
   currentPassword: string;
   newPassword: string;
+};
+
+export type CouponKind = "general" | "festival" | "seasonal" | "customer";
+export type CouponState = "live" | "scheduled" | "expired" | "used-up" | "disabled";
+
+export type CouponCustomer = { id: string; name?: string; email?: string; phone?: string | null };
+
+export type Coupon = {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  kind: CouponKind;
+  discountType: "percent" | "flat";
+  value: number;
+  maxDiscount: number | null;
+  minOrderValue: number;
+  customers: CouponCustomer[];
+  startsAt: string | null;
+  endsAt: string | null;
+  usageLimit: number | null;
+  perCustomerLimit: number | null;
+  usedCount: number;
+  firstOrderOnly: boolean;
+  showAtCheckout: boolean;
+  active: boolean;
+  state: CouponState;
+  summary: string;
+  createdAt: string;
+};
+
+export type CouponPayload = {
+  code?: string;
+  name?: string;
+  description?: string;
+  kind?: CouponKind;
+  discountType?: "percent" | "flat";
+  value?: number;
+  maxDiscount?: number | null;
+  minOrderValue?: number;
+  customerIds?: string[];
+  startsAt?: string | null;
+  endsAt?: string | null;
+  usageLimit?: number | null;
+  perCustomerLimit?: number | null;
+  firstOrderOnly?: boolean;
+  showAtCheckout?: boolean;
+  active?: boolean;
+};
+
+export type CouponRedemption = {
+  id: string;
+  reference: string;
+  status: "pending" | "paid" | "shipped" | "delivered" | "cancelled";
+  total: number;
+  discount: number;
+  client: string;
+  email: string | null;
+  counted: boolean;
+  createdAt: string;
 };

@@ -51,6 +51,7 @@ export function NewOrderPanel({
   const [paymentMethod, setPaymentMethod] = useState<"prepaid" | "cod">("prepaid");
   const [pushToQikink, setPushToQikink] = useState(true);
   const [note, setNote] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,6 +111,7 @@ export function NewOrderPanel({
         },
         paymentMethod,
         note: note.trim() || undefined,
+        couponCode: couponCode.trim() || undefined,
         pushToQikink,
       });
       onCreated(order);
@@ -263,6 +265,13 @@ export function NewOrderPanel({
             onChange={(e) => setNote(e.target.value)}
             placeholder="Internal note (e.g. WhatsApp order, UPI ref)"
             className="w-full bg-muted px-3 py-2 text-sm technical-border"
+          />
+          <input
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+            aria-label="Coupon code"
+            placeholder="Coupon code (optional) — same rules as checkout"
+            className="w-full bg-muted px-3 py-2 font-mono text-sm technical-border"
           />
         </div>
       </div>
