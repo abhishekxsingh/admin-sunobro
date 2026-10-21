@@ -10,6 +10,7 @@ import type { AdminProduct, AdminUser } from "@/lib/api/types";
 import { SheetImportPanel } from "./SheetImportPanel";
 import { QikinkExportPanel } from "./QikinkExportPanel";
 import { ProductCatalogTable } from "./ProductCatalogTable";
+import { ColourEntryForm, SIZE_LADDER, sizesFor, type ColourEntry } from "./ColourEditors";
 
 const DEMO_PRODUCTS: AdminProduct[] = [
   {
@@ -70,6 +71,8 @@ type VariantRow = {
   price: string;
   stock: string;
   image: string;
+  /** false = switched off in the catalog (hidden, needs no Store SKU) */
+  enabled: boolean;
 };
 
 const EMPTY_FORM: ProductForm = {
@@ -160,8 +163,74 @@ export function ProductsClient() {
     };
   }, [router]);
 
-  const mappedCount = variants.filter((v) => v.qikinkSku.trim()).length;
-  const fullyMapped = variants.length > 0 && mappedCount === variants.length;
+  const onVariants = variants.filter((v) => v.enabled);
+  const mappedCount = onVariants.filter((v) => v.qikinkSku.trim()).length;
+  const fullyMapped = onVariants.length > 0 && mappedCount === onVariants.length;
+
+  // Colour → sizes already in the form, and the sizes the add-colour block offers.
+  const formColours = useMemo(() => {
+    const map: Record<string, string[]> = {};
+    variants.forEach((v) => (map[v.color] = [...(map[v.color] || []), v.size]));
+    return map;
+  }, [variants]);
+  const formSizes = useMemo(() => {
+    const base = sizesFor(editTarget);
+    const extra = variants.map((v) => v.size).filter((s) => !base.includes(s));
+    return [...new Set([...base, ...extra])];
+  }, [editTarget, variants]);
+
+  // Adds a colour (or missing sizes of an existing one) to the form; saved with SAVE PRODUCT.
+  const addColourToForm = async (entry: ColourEntry) => {
+    const clash = entry.sizes.find(
+      (s) => s.qikinkSku && variants.some((v) => v.qikinkSku.trim() === s.qikinkSku),
+    );
+    if (clash) throw new Error(`Store SKU ${clash.qikinkSku} is already used on this product.`);
+    const sameColour = variants.find((v) => v.color.toLowerCase() === entry.color.toLowerCase());
+    const image = entry.image || sameColour?.image || "";
+    const added = entry.sizes.map((s) => ({
+      size: s.size,
+      color: entry.color,
+      sku: "",
+      qikinkSku: s.qikinkSku || "",
+      price: "",
+      stock: "0",
+      image,
+      enabled: true,
+    }));
+    setVariants((rows) => {
+      // Keep each colour's rows together, in size order.
+      const next = [...rows];
+      const lastOfColour = next
+        .map((r) => r.color.toLowerCase())
+        .lastIndexOf(entry.color.toLowerCase());
+      next.splice(lastOfColour === -1 ? next.length : lastOfColour + 1, 0, ...added);
+      const order = (size: string) => {
+        const i = SIZE_LADDER.indexOf(size.toUpperCase());
+        return i === -1 ? SIZE_LADDER.length : i;
+      };
+      const colourOrder = [...new Set(next.map((r) => r.color.toLowerCase()))];
+      return next.sort(
+        (a, b) =>
+          colourOrder.indexOf(a.color.toLowerCase()) - colourOrder.indexOf(b.color.toLowerCase()) ||
+          order(a.size) - order(b.size),
+      );
+    });
+    // Keep the BUILD GRID boxes in step so a later rebuild doesn't drop these rows.
+    const addTo = (list: string, values: string[]) => {
+      const items = splitList(list);
+      values.forEach((v) => {
+        if (!items.some((i) => i.toLowerCase() === v.toLowerCase())) items.push(v);
+      });
+      return items.join(", ");
+    };
+    setGridColors((g) => addTo(g, [entry.color]));
+    setGridSizes((g) =>
+      addTo(
+        g,
+        entry.sizes.map((s) => s.size),
+      ),
+    );
+  };
 
   const liveUnmapped = products.filter((p) => p.status === "active" && !p.qikinkSynced);
   const inReview = products.filter((p) => p.status === "review").length;
@@ -222,6 +291,7 @@ export function ProductsClient() {
         price: v.price != null ? String(v.price) : "",
         stock: String(v.stock ?? 0),
         image: v.image || "",
+        enabled: v.enabled !== false,
       }));
       setVariants(rows);
       setGridSizes([...new Set(rows.map((r) => r.size))].join(", "));
@@ -248,6 +318,7 @@ export function ProductsClient() {
               price: "",
               stock: "0",
               image: "",
+              enabled: true,
             },
         ),
       ),
@@ -555,7 +626,7 @@ export function ProductsClient() {
                 <p className="font-mono text-[11px] uppercase tracking-widest">
                   Variants → Qikink SKUs
                 </p>
-                <MappingBadge mapped={mappedCount} total={variants.length} />
+                <MappingBadge mapped={mappedCount} total={onVariants.length} />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
@@ -621,6 +692,17 @@ export function ProductsClient() {
                 </button>
               </div>
 
+              <ColourEntryForm
+                key={editTarget?.id ?? "new"}
+                idPrefix={`form-colour-${editTarget?.id ?? "new"}`}
+                sizes={formSizes}
+                existing={formColours}
+                live={form.status === "active"}
+                mergeExisting
+                startOpen={view === "edit"}
+                onSubmit={addColourToForm}
+              />
+
               <div className="technical-border overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -654,14 +736,19 @@ export function ProductsClient() {
                     ) : (
                       variants.map((row, i) => {
                         const duplicate = duplicateQikinkSkus.has(row.qikinkSku.trim());
-                        const missing = !row.qikinkSku.trim();
+                        const missing = row.enabled && !row.qikinkSku.trim();
                         return (
                           <tr
                             key={rowKey(row.size, row.color) + i}
                             className="border-b border-border/30 last:border-b-0"
                           >
                             <td className="p-2 font-mono text-xs">{row.size}</td>
-                            <td className="p-2 font-mono text-xs">{row.color}</td>
+                            <td className="p-2 font-mono text-xs">
+                              {row.color}
+                              {!row.enabled && (
+                                <span className="ml-1 text-[9px] text-muted-foreground">(OFF)</span>
+                              )}
+                            </td>
                             <td className="p-2">
                               <input
                                 value={row.qikinkSku}

@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Plus } from "lucide-react";
 import { ApiError } from "@/lib/api/client";
 import { adminProductsApi } from "@/lib/api/endpoints";
 import type { AdminProduct } from "@/lib/api/types";
 
-const SIZE_LADDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
+export const SIZE_LADDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL"];
 const COMMON_COLOURS = [
   "White",
   "Black",
@@ -34,42 +34,62 @@ const errorText = (err: unknown, fallback: string) =>
   err instanceof ApiError || err instanceof Error ? err.message : fallback;
 
 /** "XS - XXL" from the Qikink export → ["XS","S","M","L","XL","XXL"]. */
-export function sizesFor(product: AdminProduct): string[] {
-  const range = product.qikink?.sizeRange?.split("-").map((s) => s.trim().toUpperCase());
+export function sizesFor(product: Pick<AdminProduct, "qikink" | "sizes"> | null): string[] {
+  const range = product?.qikink?.sizeRange?.split("-").map((s) => s.trim().toUpperCase());
   if (range?.length === 2) {
     const from = SIZE_LADDER.indexOf(range[0]);
     const to = SIZE_LADDER.indexOf(range[1]);
     if (from !== -1 && to >= from) return SIZE_LADDER.slice(from, to + 1);
   }
-  return product.sizes.length ? product.sizes : SIZE_LADDER.slice(0, 6);
+  return product?.sizes.length ? product.sizes : SIZE_LADDER.slice(0, 6);
 }
+
+export type ColourEntry = {
+  color: string;
+  image?: string;
+  sizes: { size: string; qikinkSku?: string }[];
+};
 
 /**
  * Manual entry for one colour: name, one image link, and a Store SKU per
  * size. Sizes start as the product's full Qikink size range; untick any the
- * colour doesn't come in.
+ * colour doesn't come in. With `mergeExisting`, an existing colour's name adds
+ * only the sizes it doesn't have yet.
  */
-export function AddColourCard({
-  product,
-  existingColours,
-  onAdded,
+export function ColourEntryForm({
+  idPrefix,
+  sizes,
+  existing,
+  live,
+  mergeExisting = false,
+  startOpen,
+  submitVerb = "ADD",
+  onSubmit,
 }: {
-  product: AdminProduct;
-  existingColours: string[];
-  onAdded: (p: AdminProduct) => void;
+  idPrefix: string;
+  sizes: string[];
+  /** colour → sizes it already has */
+  existing: Record<string, string[]>;
+  live: boolean;
+  mergeExisting?: boolean;
+  startOpen: boolean;
+  submitVerb?: string;
+  onSubmit: (entry: ColourEntry) => Promise<void>;
 }) {
-  const sizes = useMemo(() => sizesFor(product), [product]);
-  const [open, setOpen] = useState(existingColours.length === 0);
+  const existingColours = Object.keys(existing);
+  const [open, setOpen] = useState(startOpen);
   const [colour, setColour] = useState("");
   const [image, setImage] = useState("");
-  const [rows, setRows] = useState<Record<string, { on: boolean; sku: string }>>(() =>
-    Object.fromEntries(sizes.map((s) => [s, { on: true, sku: "" }])),
-  );
+  const [rows, setRows] = useState<Record<string, { on: boolean; sku: string }>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const chosen = sizes.filter((s) => rows[s]?.on);
-  const missingSku = chosen.filter((s) => !rows[s].sku.trim());
+  const match = existingColours.find((c) => c.toLowerCase() === colour.trim().toLowerCase());
+  const taken = Boolean(match) && !mergeExisting;
+  const already = new Set(match ? existing[match] : []);
+  const rowFor = (s: string) => rows[s] ?? { on: true, sku: "" };
+  const chosen = sizes.filter((s) => !already.has(s) && rowFor(s).on);
+  const missingSku = chosen.filter((s) => !rowFor(s).sku.trim());
 
   // Pasting a whole column of Store SKUs (one per line) into the first box
   // fills the sizes in order.
@@ -83,7 +103,7 @@ export function AddColourCard({
     setRows((r) => {
       const next = { ...r };
       chosen.slice(start).forEach((s, i) => {
-        if (lines[i]) next[s] = { ...next[s], sku: lines[i] };
+        if (lines[i]) next[s] = { ...rowFor(s), sku: lines[i] };
       });
       return next;
     });
@@ -94,15 +114,14 @@ export function AddColourCard({
     setBusy(true);
     setError(null);
     try {
-      const updated = await adminProductsApi.addVariants(product.id, {
-        color: colour.trim(),
+      await onSubmit({
+        color: match || colour.trim(),
         image: image.trim() || undefined,
-        sizes: chosen.map((size) => ({ size, qikinkSku: rows[size].sku.trim() || undefined })),
+        sizes: chosen.map((size) => ({ size, qikinkSku: rowFor(size).sku.trim() || undefined })),
       });
-      onAdded(updated);
       setColour("");
       setImage("");
-      setRows(Object.fromEntries(sizes.map((s) => [s, { on: true, sku: "" }])));
+      setRows({});
     } catch (err) {
       setError(errorText(err, "Could not add that colour."));
     } finally {
@@ -122,50 +141,61 @@ export function AddColourCard({
     );
   }
 
-  const taken = existingColours.some((c) => c.toLowerCase() === colour.trim().toLowerCase());
+  const label = colour.trim() ? (match || colour.trim()).toUpperCase() : "COLOUR";
 
   return (
     <div className="p-3 technical-border border-primary/40 bg-surface-lowest space-y-3 md:col-span-2 xl:col-span-3">
-      <p className="font-mono text-[11px] uppercase tracking-widest">Add a colour</p>
+      <p className="font-mono text-[11px] uppercase tracking-widest">
+        Add a colour{mergeExisting ? " (or sizes to an existing one)" : ""}
+      </p>
       <div className="grid gap-3 md:grid-cols-2">
         <div>
           <label
-            htmlFor={`new-colour-${product.id}`}
+            htmlFor={`${idPrefix}-colour`}
             className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
           >
             Colour (as named in Qikink)
           </label>
           <input
-            id={`new-colour-${product.id}`}
-            list={`colour-names-${product.id}`}
+            id={`${idPrefix}-colour`}
+            list={`${idPrefix}-colour-names`}
             value={colour}
             onChange={(e) => setColour(e.target.value)}
             placeholder="e.g. Black"
             className="w-full bg-muted px-3 py-2 text-sm technical-border"
           />
-          <datalist id={`colour-names-${product.id}`}>
-            {COMMON_COLOURS.filter((c) => !existingColours.includes(c)).map((c) => (
-              <option key={c} value={c} />
-            ))}
+          <datalist id={`${idPrefix}-colour-names`}>
+            {(mergeExisting ? existingColours : [])
+              .concat(COMMON_COLOURS.filter((c) => !existingColours.includes(c)))
+              .map((c) => (
+                <option key={c} value={c} />
+              ))}
           </datalist>
           {taken && (
             <p className="mt-1 font-mono text-[10px] text-tertiary">
               {colour} is already on this product — use + SIZE on its card instead.
             </p>
           )}
+          {match && mergeExisting && (
+            <p className="mt-1 font-mono text-[10px] text-muted-foreground">
+              {match} is already here — this adds the sizes it doesn&apos;t have yet.
+            </p>
+          )}
         </div>
         <div>
           <label
-            htmlFor={`new-colour-image-${product.id}`}
+            htmlFor={`${idPrefix}-image`}
             className="block font-mono text-[10px] text-muted-foreground uppercase mb-1"
           >
             Image link (Qikink mockup for this colour)
           </label>
           <input
-            id={`new-colour-image-${product.id}`}
+            id={`${idPrefix}-image`}
             value={image}
             onChange={(e) => setImage(e.target.value)}
-            placeholder="https://qikink-assets…/Front_1_c_2.jpg"
+            placeholder={
+              match ? "leave empty to keep its image" : "https://qikink-assets…/Front_1_c_2.jpg"
+            }
             className="w-full bg-muted px-3 py-2 font-mono text-[11px] technical-border"
           />
         </div>
@@ -178,35 +208,36 @@ export function AddColourCard({
         </p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {sizes.map((size, i) => {
-            const row = rows[size];
+            const row = rowFor(size);
+            const has = already.has(size);
+            const on = row.on && !has;
             return (
-              <div key={size} className={`flex items-center gap-2 ${row.on ? "" : "opacity-50"}`}>
+              <div key={size} className={`flex items-center gap-2 ${on ? "" : "opacity-50"}`}>
                 <label className="flex w-16 shrink-0 items-center gap-1.5 font-mono text-xs">
                   <input
                     type="checkbox"
-                    checked={row.on}
+                    checked={on}
+                    disabled={has}
                     onChange={(e) =>
-                      setRows((r) => ({ ...r, [size]: { ...r[size], on: e.target.checked } }))
+                      setRows((r) => ({ ...r, [size]: { ...rowFor(size), on: e.target.checked } }))
                     }
                   />
                   {size}
                 </label>
                 <input
-                  id={`new-colour-${product.id}-sku-${i}`}
+                  id={`${idPrefix}-sku-${i}`}
                   aria-label={`Store SKU for ${size}`}
-                  value={row.sku}
-                  disabled={!row.on}
+                  value={has ? "" : row.sku}
+                  disabled={!on}
                   onPaste={(e) => {
                     if (handlePaste(size, e.clipboardData.getData("text"))) e.preventDefault();
                   }}
                   onChange={(e) =>
-                    setRows((r) => ({ ...r, [size]: { ...r[size], sku: e.target.value } }))
+                    setRows((r) => ({ ...r, [size]: { ...rowFor(size), sku: e.target.value } }))
                   }
-                  placeholder="v-…"
+                  placeholder={has ? "already on this colour" : "v-…"}
                   className={`min-w-0 flex-1 bg-muted px-2 py-1 font-mono text-[11px] technical-border ${
-                    row.on && row.sku && !row.sku.trim().startsWith("v-")
-                      ? "border-destructive/60"
-                      : ""
+                    on && row.sku && !row.sku.trim().startsWith("v-") ? "border-destructive/60" : ""
                   }`}
                 />
               </div>
@@ -220,7 +251,7 @@ export function AddColourCard({
         <p className="font-mono text-[10px] text-muted-foreground">
           {chosen.length} size{chosen.length === 1 ? "" : "s"}
           {missingSku.length ? ` · ${missingSku.length} without a Store SKU` : " · all mapped"}
-          {product.status === "active" && missingSku.length ? " — needed, the product is live" : ""}
+          {live && missingSku.length ? " — needed, the product is live" : ""}
         </p>
         <div className="flex gap-2">
           {existingColours.length > 0 && (
@@ -238,11 +269,34 @@ export function AddColourCard({
             disabled={busy || !colour.trim() || taken || chosen.length === 0}
             className="bg-secondary text-secondary-foreground px-4 py-1.5 font-mono text-[11px] font-bold hover:opacity-90 disabled:opacity-40"
           >
-            {busy ? "ADDING..." : `ADD ${colour.trim() ? colour.trim().toUpperCase() : "COLOUR"}`}
+            {busy ? "ADDING..." : `${submitVerb} ${label}`}
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+/** ADD COLOUR in the catalog's expanded row — saves straight away. */
+export function AddColourCard({
+  product,
+  existingColours,
+  onAdded,
+}: {
+  product: AdminProduct;
+  existingColours: string[];
+  onAdded: (p: AdminProduct) => void;
+}) {
+  const existing = Object.fromEntries(existingColours.map((c) => [c, [] as string[]]));
+  return (
+    <ColourEntryForm
+      idPrefix={`new-colour-${product.id}`}
+      sizes={sizesFor(product)}
+      existing={existing}
+      live={product.status === "active"}
+      startOpen={existingColours.length === 0}
+      onSubmit={async (entry) => onAdded(await adminProductsApi.addVariants(product.id, entry))}
+    />
   );
 }
 
