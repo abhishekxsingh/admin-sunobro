@@ -176,6 +176,7 @@ const needsQikinkPush = (o: AdminOrder) =>
 const PAYMENT_LABEL: Record<string, string> = {
   razorpay: "RAZORPAY",
   payu: "PAYU",
+  easebuzz: "EASEBUZZ",
   cashfree: "CASHFREE",
   manual: "PREPAID · ADMIN",
   cod: "COD",

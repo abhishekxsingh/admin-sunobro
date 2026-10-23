@@ -5,7 +5,52 @@ import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminAuthApi, paymentsApi, qikinkApi } from "@/lib/api/endpoints";
-import type { AdminUser, PaymentGatewayId, PaymentSettings, QikinkStatus } from "@/lib/api/types";
+import type {
+  AdminUser,
+  PaymentGatewayId,
+  PaymentGatewayStatus,
+  PaymentSettings,
+  QikinkStatus,
+} from "@/lib/api/types";
+
+const GATEWAY_ROWS: PaymentGatewayStatus[] = [
+  { id: "payu", label: "PayU", mode: "", configured: false, dummy: false },
+  { id: "razorpay", label: "Razorpay", mode: "", configured: false, dummy: false },
+  { id: "easebuzz", label: "Easebuzz", mode: "", configured: false, dummy: false },
+  { id: "cashfree", label: "Cashfree", mode: "", configured: false, dummy: false },
+];
+
+function GatewaySwitch({
+  on,
+  disabled,
+  label,
+  onSelect,
+}: {
+  on: boolean;
+  disabled: boolean;
+  label: string;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      aria-label={`${label} ${on ? "on" : "off"}`}
+      disabled={disabled}
+      onClick={onSelect}
+      className={`relative h-5 w-9 shrink-0 rounded-full border transition-colors disabled:opacity-40 ${
+        on ? "bg-secondary/80 border-secondary" : "bg-muted border-border/60"
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 h-3.5 w-3.5 rounded-full bg-background transition-all ${
+          on ? "left-[18px]" : "left-0.5"
+        }`}
+      />
+    </button>
+  );
+}
 
 export function SettingsClient() {
   const router = useRouter();
@@ -176,36 +221,39 @@ export function SettingsClient() {
                 Payment gateway
               </p>
               <p className="font-mono text-[10px] text-muted-foreground">
-                Checkout uses the active gateway. Razorpay, PayU, and Cashfree stay configured
-                together.
+                Turn one gateway on. Checkout uses that one.
               </p>
             </div>
 
             <div className="space-y-3">
-              {(payments?.gateways || []).map((gateway) => {
+              {(payments?.gateways?.length ? payments.gateways : GATEWAY_ROWS).map((gateway) => {
                 const active = payments?.activeGateway === gateway.id;
+                const status = !payments
+                  ? "loading"
+                  : !gateway.configured
+                    ? "not configured"
+                    : gateway.dummy
+                      ? `${gateway.mode} · dummy keys`
+                      : gateway.mode;
                 return (
-                  <button
+                  <div
                     key={gateway.id}
-                    type="button"
-                    onClick={() => activateGateway(gateway.id)}
-                    disabled={paymentBusy !== null || !gateway.configured}
-                    className={`flex w-full items-center justify-between gap-4 technical-border px-4 py-3 text-left transition-all disabled:opacity-50 ${
-                      active ? "border-primary" : "hover:border-foreground"
-                    }`}
+                    className="flex w-full items-center justify-between gap-4 technical-border px-4 py-3"
                   >
                     <span>
                       <span className="block font-mono text-[12px]">{gateway.label}</span>
                       <span className="block font-mono text-[10px] text-muted-foreground uppercase">
-                        {gateway.mode}
-                        {gateway.dummy ? " · dummy keys" : ""}
-                        {!gateway.configured ? " · not configured" : ""}
+                        {paymentBusy === gateway.id ? "SAVING..." : active ? "ON" : "OFF"}
+                        {` · ${status}`}
                       </span>
                     </span>
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
-                      {paymentBusy === gateway.id ? "SAVING..." : active ? "ACTIVE" : "ACTIVATE"}
-                    </span>
-                  </button>
+                    <GatewaySwitch
+                      on={active}
+                      disabled={paymentBusy !== null || !gateway.configured}
+                      label={gateway.label}
+                      onSelect={() => activateGateway(gateway.id)}
+                    />
+                  </div>
                 );
               })}
             </div>

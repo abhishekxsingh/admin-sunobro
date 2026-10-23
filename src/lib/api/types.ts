@@ -252,7 +252,7 @@ export type AdminCreateOrderPayload = {
   pushToQikink?: boolean;
 };
 
-export type PaymentGatewayId = "razorpay" | "payu" | "cashfree";
+export type PaymentGatewayId = "razorpay" | "payu" | "easebuzz" | "cashfree";
 
 export type PaymentGatewayStatus = {
   id: PaymentGatewayId;
