@@ -70,7 +70,9 @@ export function SettingsClient() {
       .get()
       .then(setPayments)
       .catch((err) => {
-        setPaymentNotice(err instanceof ApiError ? err.message : "Could not load payment gateways.");
+        setPaymentNotice(
+          err instanceof ApiError ? err.message : "Could not load payment gateways.",
+        );
       });
   }, []);
 
