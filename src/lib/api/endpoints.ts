@@ -9,6 +9,8 @@ import type {
   AdminUser,
   ChangePasswordPayload,
   InventoryItem,
+  PaymentGatewayId,
+  PaymentSettings,
   QikinkStatus,
   QikinkSyncResult,
   QueueOrder,
@@ -34,6 +36,12 @@ export const adminApi = {
     ),
   pushOrderToQikink: (id: string) => api.post<QueueOrder>(`/admin/orders/${id}/qikink/push`),
   syncOrderFromQikink: (id: string) => api.post<QueueOrder>(`/admin/orders/${id}/qikink/sync`),
+};
+
+export const paymentsApi = {
+  get: () => api.get<PaymentSettings>("/admin/payments"),
+  update: (activeGateway: PaymentGatewayId) =>
+    api.put<PaymentSettings>("/admin/payments", { activeGateway }),
 };
 
 export const qikinkApi = {

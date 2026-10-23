@@ -158,6 +158,21 @@ export type AdminCreateOrderPayload = {
   pushToQikink?: boolean;
 };
 
+export type PaymentGatewayId = "razorpay" | "payu" | "cashfree";
+
+export type PaymentGatewayStatus = {
+  id: PaymentGatewayId;
+  label: string;
+  mode: string;
+  configured: boolean;
+  dummy: boolean;
+};
+
+export type PaymentSettings = {
+  activeGateway: PaymentGatewayId;
+  gateways: PaymentGatewayStatus[];
+};
+
 export type QikinkStatus = {
   connected: boolean;
   env?: string;

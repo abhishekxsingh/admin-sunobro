@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
-import { adminAuthApi, qikinkApi } from "@/lib/api/endpoints";
-import type { AdminUser, QikinkStatus } from "@/lib/api/types";
+import { adminAuthApi, paymentsApi, qikinkApi } from "@/lib/api/endpoints";
+import type { AdminUser, PaymentGatewayId, PaymentSettings, QikinkStatus } from "@/lib/api/types";
 
 export function SettingsClient() {
   const router = useRouter();
@@ -16,6 +16,9 @@ export function SettingsClient() {
   const [qikink, setQikink] = useState<QikinkStatus | null>(null);
   const [qikinkBusy, setQikinkBusy] = useState<"status" | "products" | "orders" | null>("status");
   const [qikinkLog, setQikinkLog] = useState<string | null>(null);
+  const [payments, setPayments] = useState<PaymentSettings | null>(null);
+  const [paymentBusy, setPaymentBusy] = useState<PaymentGatewayId | null>(null);
+  const [paymentNotice, setPaymentNotice] = useState<string | null>(null);
 
   const refreshQikink = async () => {
     setQikinkBusy("status");
@@ -45,8 +48,30 @@ export function SettingsClient() {
     }
   };
 
+  const activateGateway = async (id: PaymentGatewayId) => {
+    if (!payments || payments.activeGateway === id || paymentBusy) return;
+    setPaymentBusy(id);
+    setPaymentNotice(null);
+    try {
+      const next = await paymentsApi.update(id);
+      setPayments(next);
+      const label = next.gateways.find((item) => item.id === next.activeGateway)?.label || id;
+      setPaymentNotice(`${label} is the checkout gateway.`);
+    } catch (err) {
+      setPaymentNotice(err instanceof ApiError ? err.message : "Could not switch the gateway.");
+    } finally {
+      setPaymentBusy(null);
+    }
+  };
+
   useEffect(() => {
     void refreshQikink();
+    paymentsApi
+      .get()
+      .then(setPayments)
+      .catch((err) => {
+        setPaymentNotice(err instanceof ApiError ? err.message : "Could not load payment gateways.");
+      });
   }, []);
 
   useEffect(() => {
@@ -141,6 +166,51 @@ export function SettingsClient() {
                 SAVE CHANGES — NOT CONNECTED TO BACKEND
               </button>
             </div>
+          </section>
+
+          <section className="technical-border bg-surface-lowest p-6 space-y-5">
+            <div>
+              <p className="font-mono text-[11px] uppercase tracking-widest mb-0.5">
+                Payment gateway
+              </p>
+              <p className="font-mono text-[10px] text-muted-foreground">
+                Checkout uses the active gateway. Razorpay, PayU, and Cashfree stay configured
+                together.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              {(payments?.gateways || []).map((gateway) => {
+                const active = payments?.activeGateway === gateway.id;
+                return (
+                  <button
+                    key={gateway.id}
+                    type="button"
+                    onClick={() => activateGateway(gateway.id)}
+                    disabled={paymentBusy !== null || !gateway.configured}
+                    className={`flex w-full items-center justify-between gap-4 technical-border px-4 py-3 text-left transition-all disabled:opacity-50 ${
+                      active ? "border-primary" : "hover:border-foreground"
+                    }`}
+                  >
+                    <span>
+                      <span className="block font-mono text-[12px]">{gateway.label}</span>
+                      <span className="block font-mono text-[10px] text-muted-foreground uppercase">
+                        {gateway.mode}
+                        {gateway.dummy ? " · dummy keys" : ""}
+                        {!gateway.configured ? " · not configured" : ""}
+                      </span>
+                    </span>
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-primary">
+                      {paymentBusy === gateway.id ? "SAVING..." : active ? "ACTIVE" : "ACTIVATE"}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {paymentNotice && (
+              <p className="font-mono text-[10px] text-muted-foreground">{paymentNotice}</p>
+            )}
           </section>
 
           {/* Qikink Integration */}
