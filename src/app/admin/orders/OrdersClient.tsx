@@ -28,7 +28,6 @@ import { AdminSidebar } from "@/components/admin-sidebar";
 import { ApiError } from "@/lib/api/client";
 import { adminApi, adminAuthApi, qikinkApi } from "@/lib/api/endpoints";
 import type { AdminOrder, AdminUser, QueueOrder } from "@/lib/api/types";
-import { NewOrderPanel } from "./NewOrderPanel";
 
 const DEMO_ORDERS: AdminOrder[] = [
   {
@@ -200,7 +199,6 @@ export function OrdersClient() {
   const [statusNote, setStatusNote] = useState("");
   const [qikinkBusy, setQikinkBusy] = useState<"push" | "sync" | "all" | null>(null);
   const [notice, setNotice] = useState<{ tone: "info" | "error"; text: string } | null>(null);
-  const [showNewOrder, setShowNewOrder] = useState(false);
 
   // Search runs on the server across every order (not just the loaded page):
   // reference, name, email, phone, product, SKU, colour, AWB, coupon, city/PIN.
@@ -416,26 +414,15 @@ export function OrdersClient() {
                 <RefreshCw className={`h-3 w-3 ${qikinkBusy === "all" ? "animate-spin" : ""}`} />
                 {qikinkBusy === "all" ? "SYNCING..." : "SYNC QIKINK"}
               </button>
-              <button
-                onClick={() => setShowNewOrder(true)}
-                disabled={isDemo}
-                className="btn-primary px-3 py-1.5 font-mono text-[12px] font-bold flex items-center gap-2 hover:opacity-90 transition-all disabled:opacity-40"
+              <Link
+                href="/admin/orders/new"
+                className="btn-primary px-3 py-1.5 font-mono text-[12px] font-bold flex items-center gap-2"
               >
                 <Plus className="h-3 w-3" /> NEW ORDER
-              </button>
+              </Link>
             </div>
           </div>
         </header>
-
-        {showNewOrder && (
-          <NewOrderPanel
-            onClose={() => setShowNewOrder(false)}
-            onCreated={(order) => {
-              setOrders((prev) => [fromQueueOrder(order), ...prev]);
-              setShowNewOrder(false);
-            }}
-          />
-        )}
 
         {/* Search */}
         <div className="relative mb-4 max-w-xl">

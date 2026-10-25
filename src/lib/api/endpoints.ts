@@ -1,5 +1,7 @@
 import { api } from "./client";
 import type {
+  CatalogProduct,
+  OrderQuote,
   AdminCustomer,
   AdminCustomerDetail,
   TeamCredentials,
@@ -45,6 +47,13 @@ export const adminApi = {
   },
   orderDetail: (id: string) => api.get<AdminOrder>(`/admin/orders/${id}`),
   createOrder: (payload: AdminCreateOrderPayload) => api.post<QueueOrder>("/admin/orders", payload),
+  orderCatalog: () => api.get<CatalogProduct[]>("/admin/orders/catalog"),
+  quoteOrder: (payload: {
+    items: { sku: string; qty: number }[];
+    customerId?: string;
+    email?: string;
+    couponCode?: string;
+  }) => api.post<OrderQuote>("/admin/orders/quote", payload),
   updateOrderStatus: (id: string, payload: { status: AdminOrder["status"]; note?: string }) =>
     api.put<{ ref: string; status: string; updatedAt: string; warning: string | null }>(
       `/admin/orders/${id}/status`,

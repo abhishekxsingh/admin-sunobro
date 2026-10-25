@@ -20,6 +20,7 @@ src/
 │   ├── page.tsx                 redirects to /admin
 │   ├── admin/
 │   │   ├── page.tsx + AdminDashboardClient.tsx   stats cards + quick-nav
+│   │   ├── orders/new/  CreateOrderClient.tsx — Create order page: customer (existing search → saved addresses / new → creates account / guest), product picker (colour + size chips, qty), delivery address, payment (paid: UPI/cash/bank + reference, or COD), reason + note, send-to-Qikink; sticky summary priced by POST /admin/orders/quote with coupon suggestions (eligible + saving, or reason). NEW ORDER on the Orders page links here.
 │   │   ├── orders/      (search box → GET /admin/orders?q=&status= across ref, name, email, phone, product, SKU, colour, AWB, coupon, city/PIN; reads ?q= from the URL)
 │   │   ├── orders/      OrdersClient.tsx          order queue + SYNC_QIKINK + NEW ORDER; drawer loads full detail, PUSH_TO_QIKINK / SYNC_STATUS, cancel warning
 │   │   │                NewOrderPanel.tsx         admin-created orders: product/variant picker, shipping, prepaid vs COD, push now
