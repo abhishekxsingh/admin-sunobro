@@ -250,6 +250,65 @@ export type AdminCreateOrderPayload = {
   note?: string;
   couponCode?: string;
   pushToQikink?: boolean;
+  customerId?: string;
+  createCustomer?: boolean;
+  saveAddress?: boolean;
+  paymentReference?: string;
+  reason?: string;
+};
+
+export type CatalogVariant = {
+  sku: string;
+  color: string;
+  size: string;
+  price: number;
+  image: string | null;
+  mapped: boolean;
+};
+
+export type CatalogProduct = {
+  id: string;
+  name: string;
+  status: "active" | "review" | "draft";
+  price: number;
+  image: string | null;
+  qikinkProductId: string | null;
+  variants: CatalogVariant[];
+};
+
+export type QuoteLine = {
+  sku: string;
+  name: string;
+  color: string;
+  size: string;
+  image: string | null;
+  price: number;
+  qty: number;
+  lineTotal: number;
+  mapped: boolean;
+};
+
+export type QuoteOffer = {
+  code: string;
+  name: string | null;
+  summary: string;
+  kind: string;
+  personal: boolean;
+  eligible: boolean;
+  saving: number;
+  reason: string | null;
+  endsAt: string | null;
+};
+
+export type OrderQuote = {
+  lines: QuoteLine[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  coupon: (QuoteOffer & { discount: number }) | null;
+  couponError: string | null;
+  problems: string[];
+  offers: QuoteOffer[];
 };
 
 export type PaymentGatewayId = "razorpay" | "payu" | "easebuzz" | "cashfree";
