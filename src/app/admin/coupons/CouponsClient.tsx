@@ -11,6 +11,8 @@ import {
   CircleCheck,
   CirclePause,
   Copy,
+  EyeOff,
+  Globe,
   LayoutGrid,
   Plus,
   ReceiptText,
@@ -192,6 +194,18 @@ export function CouponsClient() {
         ? list.map((c) => (c.id === saved.id ? saved : c))
         : [saved, ...list];
     });
+
+  const setOnWebsite = async (c: Coupon, on: boolean) => {
+    setBusyId(c.id);
+    setRowError(null);
+    try {
+      upsert(await adminCouponsApi.update(c.id, { showAtCheckout: on }));
+    } catch (err) {
+      setRowError({ id: c.id, message: errorText(err, "Could not update.") });
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   const toggleActive = async (c: Coupon) => {
     setBusyId(c.id);
@@ -399,11 +413,25 @@ export function CouponsClient() {
                               {c.customers.map((x) => x.name || x.email || x.id).join(", ")}
                             </p>
                           )}
-                          {c.showAtCheckout && c.kind !== "customer" && (
-                            <p className="mt-0.5 font-mono text-[11px] text-muted-foreground">
-                              suggested on website
-                            </p>
-                          )}
+                          {c.kind !== "customer" &&
+                            (c.showAtCheckout ? (
+                              <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-secondary/10 px-2 py-0.5 text-[11px] text-secondary">
+                                <Globe className="h-3 w-3" /> On website
+                              </p>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={busyId === c.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void setOnWebsite(c, true);
+                                }}
+                                title="Only people who know the code can use it. Click to suggest it on the website."
+                                className="mt-1 inline-flex items-center gap-1 rounded-full bg-tertiary/10 px-2 py-0.5 text-[11px] text-tertiary hover:bg-tertiary/20"
+                              >
+                                <EyeOff className="h-3 w-3" /> Hidden from website · Show it
+                              </button>
+                            ))}
                         </td>
                         <td className="p-4 text-sm max-w-56">
                           {c.summary}
